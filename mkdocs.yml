@@ -10,8 +10,8 @@ exclude_docs: |
   images/EKRAANIPILDID.md
 
 # Repository
-repo_name: hkhk-monitoring/monitoring-lite-lite
-repo_url: https://github.com/hkhk-monitoring/monitoring-lite-lite
+repo_name: hkhk-monitoring/monitoring-lite
+repo_url: https://github.com/hkhk-monitoring/monitoring-lite
 edit_uri: edit/main/docs/
 
 # Theme

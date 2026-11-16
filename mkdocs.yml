@@ -44,22 +44,22 @@ theme:
   palette:
   - media: "(prefers-color-scheme)"
     scheme: default
-    primary: deep purple
-    accent: pink
+    primary: teal
+    accent: amber
     toggle:
       icon: material/brightness-auto
       name: Vaheta tumele režiimile
   - media: "(prefers-color-scheme: light)"
     scheme: default
-    primary: deep purple
-    accent: pink
+    primary: teal
+    accent: amber
     toggle:
       icon: material/brightness-7
       name: Vaheta tumele režiimile
   - media: "(prefers-color-scheme: dark)"
     scheme: slate
-    primary: deep purple
-    accent: pink
+    primary: teal
+    accent: amber
     toggle:
       icon: material/brightness-4
       name: Vaheta heledasse režiimi
@@ -80,7 +80,14 @@ plugins:
 
 # Navigation
 nav:
-- Avaleht: index.md
+- Kursus:
+  - Avaleht: index.md
+
+- Kohtumised:
+  - K1 · Mõõdikud ja töölaud:
+    - Loeng: k01/lecture.md
+    - Praktikum: k01/lab.md
+    - Kodutöö: k01/homework.md
 
 # Markdown extensions
 markdown_extensions:

@@ -1,0 +1,43 @@
+<svg viewBox="0 0 900 470" xmlns="http://www.w3.org/2000/svg" font-family="Inter, -apple-system, sans-serif">
+  <defs>
+    <marker id="k1o" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#ff8f00"/></marker>
+    <marker id="k1b" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#546e7a"/></marker>
+    <marker id="k1u" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#1565c0"/></marker>
+  </defs>
+  <rect width="900" height="470" fill="#ffffff"/>
+  <text x="450" y="30" text-anchor="middle" font-size="18" font-weight="700" fill="#263238">Praktikumi topoloogia: masinad, pordid ja ühendused</text>
+  <rect x="20" y="60" width="320" height="230" rx="12" fill="#fff8e1" stroke="#ff8f00" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="40" y="84" font-size="14" font-weight="700" fill="#e65100">vm3 · Docker Compose</text>
+  <rect x="45" y="100" width="270" height="76" rx="10" fill="#ffffff" stroke="#ff8f00" stroke-width="2"/>
+  <text x="180" y="128" text-anchor="middle" font-size="15" font-weight="700" fill="#e65100">Prometheus</text>
+  <text x="180" y="150" text-anchor="middle" font-size="11" font-family="JetBrains Mono, Menlo, monospace" fill="#5d4037">veebiliides 9090/tcp</text>
+  <text x="180" y="166" text-anchor="middle" font-size="11" font-family="JetBrains Mono, Menlo, monospace" fill="#5d4037">~/monitooring/config/prometheus.yml</text>
+  <rect x="45" y="192" width="270" height="76" rx="10" fill="#ffffff" stroke="#ff8f00" stroke-width="2"/>
+  <text x="180" y="220" text-anchor="middle" font-size="15" font-weight="700" fill="#e65100">Grafana</text>
+  <text x="180" y="242" text-anchor="middle" font-size="11" font-family="JetBrains Mono, Menlo, monospace" fill="#5d4037">veebiliides 3000/tcp</text>
+  <text x="180" y="258" text-anchor="middle" font-size="11" fill="#5d4037">loeb andmeid Prometheusest</text>
+  <line x1="180" y1="176" x2="180" y2="190" stroke="#ff8f00" stroke-width="2"/>
+  <rect x="590" y="60" width="290" height="100" rx="10" fill="#e0f2f1" stroke="#00796b" stroke-width="2"/>
+  <text x="735" y="86" text-anchor="middle" font-size="15" font-weight="700" fill="#004d40">vm2</text>
+  <text x="735" y="110" text-anchor="middle" font-size="12" fill="#263238">node_exporter (systemd)</text>
+  <text x="735" y="130" text-anchor="middle" font-size="11" font-family="JetBrains Mono, Menlo, monospace" fill="#263238">9100/tcp lahti tulemüüris</text>
+  <text x="735" y="148" text-anchor="middle" font-size="11" fill="#546e7a">esmalt käsitsi, siis playbook</text>
+  <rect x="590" y="220" width="290" height="140" rx="10" fill="#e0f2f1" stroke="#00796b" stroke-width="2"/>
+  <text x="735" y="246" text-anchor="middle" font-size="15" font-weight="700" fill="#004d40">vm1 · control node</text>
+  <text x="735" y="270" text-anchor="middle" font-size="12" fill="#263238">Ansible, Git, repositoorium</text>
+  <text x="735" y="292" text-anchor="middle" font-size="12" fill="#263238">node_exporter (systemd)</text>
+  <text x="735" y="312" text-anchor="middle" font-size="11" font-family="JetBrains Mono, Menlo, monospace" fill="#263238">9100/tcp lahti tulemüüris</text>
+  <text x="735" y="332" text-anchor="middle" font-size="11" fill="#546e7a">playbook (ansible_connection=local)</text>
+  <line x1="315" y1="120" x2="586" y2="105" stroke="#ff8f00" stroke-width="2.5" marker-end="url(#k1o)"/>
+  <line x1="315" y1="150" x2="586" y2="270" stroke="#ff8f00" stroke-width="2.5" marker-end="url(#k1o)"/>
+  <text x="450" y="100" text-anchor="middle" font-size="12" fill="#e65100">kogub iga 15 s: GET :9100/metrics</text>
+  <line x1="680" y1="218" x2="680" y2="164" stroke="#546e7a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#k1b)"/>
+  <text x="690" y="196" font-size="12" fill="#546e7a">SSH: ansible-playbook</text>
+  <line x1="586" y1="340" x2="344" y2="270" stroke="#546e7a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#k1b)"/>
+  <text x="430" y="330" text-anchor="middle" font-size="12" fill="#546e7a">scp: seaded vm3-sse</text>
+  <rect x="20" y="370" width="320" height="80" rx="10" fill="#eceff1" stroke="#546e7a" stroke-width="2"/>
+  <text x="180" y="398" text-anchor="middle" font-size="15" font-weight="700" fill="#37474f">brauser (klassiarvuti)</text>
+  <text x="180" y="420" text-anchor="middle" font-size="12" fill="#37474f">http://&lt;vm3-IP&gt;:9090 ja :3000</text>
+  <text x="180" y="438" text-anchor="middle" font-size="11" fill="#546e7a">koolis otse, kodust VPN-iga</text>
+  <line x1="180" y1="370" x2="180" y2="294" stroke="#1565c0" stroke-width="2" marker-end="url(#k1u)"/>
+</svg>

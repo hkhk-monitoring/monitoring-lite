@@ -32,12 +32,12 @@ tags:
 | | Teema | Tööriistad |
 |---|---|---|
 | **[K1](k01/lecture.md)** | Mõõdikud: server küsib, exporter vastab, töölaud | node_exporter Ansible'iga, Prometheus ja Grafana Docker Compose'iga, PromQL |
-| **K2** | Alarmid ja kättesaadavus | Prometheuse reeglid, Alertmanager, Blackbox exporter |
-| **K3** | Logid sildi järgi | Loki, Grafana Alloy |
+| **K2** | Zabbix ja alarmid: agent, server, triggerid ning sama alarm Grafanas Prometheuse andmetest | Zabbix 7 LTS, Zabbix agent 2, Grafana alarmid |
+| **K3** | Logid ühte kohta ja otsing | Elastic Stack: Elasticsearch, Kibana, Elastic Agent |
 | **K4** | Päringu teekond | OpenTelemetry, Jaeger, näidisrakendus |
-| **K5** | Rike: avastamine, põhjus ja taastumise kontroll | kõik koos |
+| **K5** | Lõpp: rike, avastamine, põhjus ja taastumise kontroll | kõik koos |
 
-Iga kohtumine jätkab eelmise tulemust: K1-s paigaldatud Prometheus ja Grafana jäävad vm3-s tööle ja K2 lisab neile alarmid.
+Iga kohtumine jätkab eelmise tulemust: K1-s paigaldatud Prometheus ja Grafana jäävad vm3-s tööle ja K2 lisab Zabbixi ning alarmid.
 
 ## Esitamine
 

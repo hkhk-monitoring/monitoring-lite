@@ -96,7 +96,7 @@ Andmed läbivad alati samad sammud, ükskõik milline tööriist on kasutusel. T
     | 3. kogutakse | keskne süsteem toob või saab andmed kätte | Prometheus küsib iga 15 sekundi järel |
     | 4. salvestatakse | uued väärtused lisatakse ajaloo juurde | Prometheuse aegridade andmebaas |
     | 5. päritakse ja seotakse | andmetest otsitakse vastust küsimusele | PromQL |
-    | 6. näidatakse ja teatatakse | töölaud, alarm, tegevus | Grafana, K2-s Alertmanager |
+    | 6. näidatakse ja teatatakse | töölaud, alarm, tegevus | Grafana, K2-s Grafana ja Zabbixi alarmid |
 
 Mõõdikud on kõige odavamad koguda ja hoida, sest üks väärtus on üks arv. Logid ja jäljed on mahukamad ja neid on vaja siis, kui mõõdik näitab probleemi ja tuleb teada, mis selle põhjustas.
 
@@ -208,11 +208,11 @@ Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.googl
 
 ### Grafana
 
-[Grafana](https://grafana.com/oss/) on töölaudade tööriist, mis tehti 2014. aastal. Enne oli igal süsteemil oma graafikute leht ja eri allikate andmeid ei saanud kõrvuti vaadata. Grafana näitab ühel töölaual andmeid mitmest allikast, näiteks Prometheusest, Zabbixist, Elasticsearchist ja andmebaasist. Praegu on Grafana Labsil terve komplekt lühendiga **LGTM**: Loki logidele, Grafana töölaudadele, Tempo jälgedele ja Mimir mõõdikute pikaajaliseks hoidmiseks, ning andmeid koguv Alloy. Suund on hoida kõik kolm andmeliiki ühes kohas ja liikuda töölaual mõõdikult sama aja logide ja jälgede juurde. K3-s kasutad Lokit ja Alloyd.
+[Grafana](https://grafana.com/oss/) on töölaudade tööriist, mis tehti 2014. aastal. Enne oli igal süsteemil oma graafikute leht ja eri allikate andmeid ei saanud kõrvuti vaadata. Grafana näitab ühel töölaual andmeid mitmest allikast, näiteks Prometheusest, Zabbixist, Elasticsearchist ja andmebaasist. Praegu on Grafana Labsil terve komplekt lühendiga **LGTM**: Loki logidele, Grafana töölaudadele, Tempo jälgedele ja Mimir mõõdikute pikaajaliseks hoidmiseks, ning andmeid koguv Alloy. Suund on hoida kõik kolm andmeliiki ühes kohas ja liikuda töölaual mõõdikult sama aja logide ja jälgede juurde. Kursusel kasutad Grafanat töölaudade ja alarmide jaoks, Loki ja Tempo on Elasticu ja Jaegeri kõrval teine valik.
 
 ### Elastic
 
-[Elastic Stack](https://www.elastic.co/elastic-stack) on tuntud ka nime ELK all: Elasticsearch, Logstash ja Kibana. Elasticsearch ilmus 2010. aastal ja on otsingumootor, mis hoiab andmeid nii, et neist saab kiiresti teksti otsida. Logstash töötleb ja suunab logisid ning Kibana on veebiliides otsinguks ja töölaudadeks, hiljem lisandusid koguvad agendid Beats ja Elastic Agent. Enne Elasticut otsiti logisid igas masinas eraldi käsuga `grep`. Elastic koondas logid ühte kohta ja tegi täistekstiotsingu kiireks, see on siiani selle tugevaim külg. 2021. aastal muutis Elastic litsentsi ja selle peale tegi Amazon avatud koopia [OpenSearch](https://opensearch.org/). Praegu kogub Elastic ka mõõdikuid ja jälgi ning toetab OpenTelemetryt.
+[Elastic Stack](https://www.elastic.co/elastic-stack) on tuntud ka nime ELK all: Elasticsearch, Logstash ja Kibana. Elasticsearch ilmus 2010. aastal ja on otsingumootor, mis hoiab andmeid nii, et neist saab kiiresti teksti otsida. Logstash töötleb ja suunab logisid ning Kibana on veebiliides otsinguks ja töölaudadeks, hiljem lisandusid koguvad agendid Beats ja Elastic Agent. Enne Elasticut otsiti logisid igas masinas eraldi käsuga `grep`. Elastic koondas logid ühte kohta ja tegi täistekstiotsingu kiireks, see on siiani selle tugevaim külg. 2021. aastal muutis Elastic litsentsi ja selle peale tegi Amazon avatud koopia [OpenSearch](https://opensearch.org/). Praegu kogub Elastic ka mõõdikuid ja jälgi ning toetab OpenTelemetryt. K3-s kogud Elasticuga kõigi kolme masina logid ühte kohta.
 
 ### OpenTelemetry ja Jaeger
 
@@ -225,12 +225,12 @@ Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.googl
 ??? note "Tabel 1.10. Tööriistad kursusel ja nende kõrval"
     | Andmeliik | Kursusel | Levinud teised | Kohtumine |
     |---|---|---|---|
-    | mõõdikud | Prometheus, node_exporter | Zabbix, InfluxDB, VictoriaMetrics | K1, K2 |
-    | alarmid | Alertmanager | Grafana alarmid, Zabbixi triggerid | K2 |
-    | logid | Loki, Alloy | OpenSearch, Elastic Stack, Graylog | K3 |
+    | mõõdikud | Prometheus, node_exporter, Zabbix | InfluxDB, VictoriaMetrics | K1, K2 |
+    | alarmid | Grafana alarmid, Zabbixi triggerid | Alertmanager, Elasticu reeglid | K2 |
+    | logid | Elastic Stack | Loki, OpenSearch, Graylog | K3 |
     | jäljed | OpenTelemetry, Jaeger | Tempo, Zipkin | K4 |
     | töölaud | Grafana | Kibana, OpenSearch Dashboards | K1–K5 |
-    | kõik ühes | Grafana koos Loki ja Jaegeriga | Uptrace, SigNoz, Elastic Observability | K5 |
+    | kõik ühes | eelmiste kohtumiste tööriistad koos | Uptrace, SigNoz, Elastic Observability, Grafana LGTM | K5 |
 
 Täna alustad mõõdikutest. Prometheus küsib mõõdikuid jälgitavatelt masinatelt, salvestab need aegridadena ja vastab päringutele.
 

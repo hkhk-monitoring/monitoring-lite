@@ -696,7 +696,7 @@ Salvesta töölaud repositooriumisse. Töölaua menüüs **Export → Export as 
     Põhjenda osa 6 kolme küsimuse tulemustega: saadaval mälu protsentides, juurfailisüsteemi vaba ruum ja protsessori kasutus. Milline andmeliik aitaks põhjust leida, kui ühes masinas hakkab ketas kiiresti täituma?
 
     ??? success "Vastus"
-        Vastus sõltub sinu masinatest. Põhjus: logid (K3) näitavad, mis protsess või teenus kirjutab, mõõdik näitab ainult, et ruum väheneb.
+        Vastus sõltub sinu masinatest. Põhjus: logid, mida kogud K3-s, näitavad, mis protsess või teenus kirjutab, mõõdik näitab ainult, et ruum väheneb.
 
 Prometheus ja Grafana vm3-s ning node_exporterid vm1-s ja vm2-s jäävad tööle. K2 alustab neist: alarmireegel tuleb päringust 6.4.
 

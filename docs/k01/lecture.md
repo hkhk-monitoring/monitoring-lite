@@ -58,15 +58,25 @@ uptime        # koormus viimase 1, 5 ja 15 minuti keskmisena
 
 Monitooring ja jälgitavus põhinevad samadel andmetel. Andmeid, mida süsteem enda kohta välja annab, nimetatakse **telemeetriaks** (telemetry). Telemeetriat tekitavad operatsioonisüsteem, teenused nagu nginx ja andmebaas, rakenduse kood, võrguseadmed ja kasutaja brauser. Hajusas süsteemis on selliseid allikaid kümneid kuni tuhandeid.
 
-Telemeetriat on nelja liiki. Sündmus ja logi on lähedased: logi on sündmuste kirjapanek tekstina.
+Telemeetriat on nelja liiki ja nende ingliskeelsete nimede algustähtedest tuleb lühend **MELT**: metrics, events, logs, traces.
 
-??? note "Tabel 1.1. Telemeetria liigid ja kursuse kohtumised"
-    | Liik | Mis see on | Näide | Küsimus | Kohtumine |
-    |---|---|---|---|---|
-    | **mõõdik** (metric) | arv, mida mõõdetakse korduvalt | saadaval mälu baitides iga 15 sekundi järel | kui palju ja kas muutub? | K1, K2 |
-    | **sündmus** (event) | üks toiming kindlal hetkel | kasutaja vahetas parooli, teenus taaskäivitus | mis juhtus? | K2, K3 |
-    | **logi** (log) | sündmuse tekstikirje ajatempliga | `Failed password for kasutaja from 192.168.125.40` | mis juhtus ja millal? | K3 |
-    | **jälg** (trace) | ühe päringu teekond läbi teenuste koos iga sammu kestusega | lehe avamine: veebiserver 20 ms, rakendus 40 ms, andmebaas 4,5 s | kus päring aega kulutas? | K4 |
+??? note "Tabel 1.1. Telemeetria liigid ehk MELT"
+    | Liik | Koosneb | Näide | Kohtumine |
+    |---|---|---|---|
+    | **mõõdik** (metric) | nimi, ajatempel, arvväärtus | saadaval mälu baitides iga 15 sekundi järel; võrgukommutaatori pordi koormus, mida küsitakse SNMP-ga kord minutis | K1, K2 |
+    | **sündmus** (event) | sündmuse nimi, ajatempel, sündmuse andmed | kommutaatori port läks maha; kasutaja vahetas parooli | K2, K3 |
+    | **logi** (log) | ajatempel ja kirjeldav tekst | `/var/log/messages` või `journalctl` rida `Failed password for kasutaja from 192.168.125.40` | K3 |
+    | **jälg** (trace) | ühe tegevusega seotud sündmuste ahel, iga sammu kestus | sisselogimine veebirakendusse: veebiserver 20 ms, rakendus 40 ms, andmebaas 4,5 s | K4 |
+
+**Mõõdik** on kokkuvõtlik arv kindla ajavahemiku kohta. Traditsiooniline võrgu ja serverite monitooring protokollidega SNMP, IPMI või WMI kogub peamiselt mõõdikuid. **Sündmus** on üks juhtum kindlal hetkel ja kannab endaga kaasas juhtumi andmeid: milline seade, mis toiming, milline kasutaja. **Logi** on sarnane sündmusega, aga on vabam tekst, mida kirjutavad rakendused, teenused ja võrguseadmed. Logi võib olla struktureeritud, näiteks syslog standardi RFC 5424 järgi, või vaba tekst, mida on palju raskem kokku võtta. **Jälg** erineb teistest selle poolest, et see ei kuulu ühele masinale: üks tegevus, näiteks kasutaja sisselogimine, läbib mitu teenust ja masinat ning jälg seob nende sammud kokku. Et eri teenused jälje tunnuse ühtmoodi edasi annaksid, on W3C 2020. aastal kinnitanud standardi [Trace Context](https://www.w3.org/TR/trace-context/), mida kasutab ka OpenTelemetry.
+
+??? note "Tabel 1.2. Liikide tugevused ja piirangud"
+    | Liik | Tugevus | Piirang |
+    |---|---|---|
+    | mõõdik | odav hoida ja töödelda, sobib aegridadeks ja üldpildiks | mida ette ei mõõdetud, seda hiljem ei näe |
+    | sündmus | näitab täpselt, mis toiming juhtus, sobib ootamatuteks päringuteks | vajab rohkem salvestusruumi ja võrku kui mõõdik |
+    | logi | kõige detailsem, parim konkreetse vea otsimiseks | suurt hulka on raske hoida ja läbi otsida, vaba tekst on raske kokku võtta |
+    | jälg | näitab tegevust otsast lõpuni üle mitme teenuse | rakendus peab jälje tunnuse edasi andma, vajab instrumenteerimist |
 
 Mõõdik on sama arv ikka ja jälle mõõdetuna. Osa 1 käsk `free` annab ühe punkti, monitooring kogub neid iga 15 sekundi järel ja tekib **aegrida**:
 
@@ -78,7 +88,7 @@ saadaval_mälu{masin="vm2"}  0.12 GB  kell 09:14:30
 
 Andmed läbivad alati samad sammud, ükskõik milline tööriist on kasutusel. Tabel 1.2 näitab, kuidas K1 tööriistad sammudele vastavad.
 
-??? note "Tabel 1.2. Andmete teekond"
+??? note "Tabel 1.3. Andmete teekond"
     | Samm | Mida tehakse | K1-s |
     |---|---|---|
     | 1. tekib | allikas mõõdab või kirjutab | Linuxi tuum loeb mälu ja protsessori näite |
@@ -98,7 +108,7 @@ Rikke juures loetakse kahte aega. **Avastamise aeg** on rikke algusest selle mä
 
 **Jälgitavus** (observability) on võime öelda süsteemi tegelik olek nende andmete põhjal, mida süsteem ise tekitab. Selleks kogutakse keskkonnast nii palju telemeetriat, et saaks uurida ka riket, mida keegi ei oodanud. Selliseid rikkeid nimetatakse inglise keeles *unknown unknowns*. AWS-i võrdlus [Monitoring vs observability](https://aws.amazon.com/compare/the-difference-between-monitoring-and-observability/) ütleb vahe lühidalt: seire vastab küsimustele millal ja mis läks valesti, jälgitavus küsimustele miks ja kuidas.
 
-??? note "Tabel 1.3. Seire ja jälgitavus"
+??? note "Tabel 1.4. Seire ja jälgitavus"
     | | Seire | Jälgitavus |
     |---|---|---|
     | küsimus | millal ja mis? | miks ja kuidas? |
@@ -109,7 +119,7 @@ Rikke juures loetakse kahte aega. **Avastamise aeg** on rikke algusest selle mä
 
 Mõiste jälgitavus tuleb juhtimisteooriast. Rudolf Kálmán kirjeldas 1960. aastal, et süsteem on jälgitav, kui selle sisemist olekut saab välja arvutada sellest, mida süsteem väljastab. IT-s tähendab see sama: serverisse sisse logimata saab telemeetria põhjal öelda, milline on serveri olek. Seire ja jälgitavus kasutavad sama telemeetriat. Näiteks pärast uut versiooni on leht aeglane. Seire näitab, et lehe laadimisaeg on kasvanud ja alarm käivitub. Jälgitavus aitab leida, milline muudatus selle põhjustas.
 
-??? note "Tabel 1.4. Aeglane leht: mida iga andmeliik näitab"
+??? note "Tabel 1.5. Aeglane leht: mida iga andmeliik näitab"
     | Andmeliik | Mida näitab |
     |---|---|
     | mõõdik | andmebaasi masina protsessori kasutus on 100%, vastuse aeg on kasvanud |
@@ -118,7 +128,7 @@ Mõiste jälgitavus tuleb juhtimisteooriast. Rudolf Kálmán kirjeldas 1960. aas
 
 Jälgitavus on muutunud tähtsaks, sest süsteemid on hajusad. Üks rakendus koosneb mitmest teenusest, mis töötavad konteinerites eri masinates, ja konteinereid luuakse ning kustutatakse pidevalt. Rike ühes teenuses paistab sageli välja hoopis teises. Kolme andmeliigi kõrval on seetõttu vaja ka **konteksti**: millises masinas ja konteineris teenus töötab, millistest teenustest see sõltub ja milline versioon on paigaldatud. Kasutaja vaatest annavad lisateavet **sünteetilised kontrollid**, mis avavad lehte regulaarselt nagu kasutaja, ja tegelike kasutajate mõõdetud laadimisajad. Dynatrace'i artikkel [What is observability?](https://www.dynatrace.com/news/blog/what-is-observability-2/) kirjeldab neid lisaandmeid lähemalt.
 
-??? note "Tabel 1.5. Mis jälgitavust takistab"
+??? note "Tabel 1.6. Mis jälgitavust takistab"
     | Takistus | Mida see tähendab |
     |---|---|
     | andmed on eraldi tööriistades | mõõdikud ühes, logid teises, jäljed kolmandas süsteemis ja neid ei saa omavahel siduda |
@@ -126,9 +136,11 @@ Jälgitavus on muutunud tähtsaks, sest süsteemid on hajusad. Üks rakendus koo
     | rakendus ei anna andmeid välja | koodi tuleb lisada mõõdikud ja jäljed, seda nimetatakse instrumenteerimiseks |
     | eri teenustel eri vormingud | sama asja nimetatakse eri teenustes eri nimega |
 
+**Kuidas jälgitavus teoks tehakse.** Jälgitavus tekib hästi tehtud seirest: telemeetria kogutakse kokku, näidatakse arusaadavalt ja andmeid tõlgendatakse koos. Ainult küsitlemisest ja lävenditest ei piisa. Eraldi mõõdikud, sündmused, logid ja jäljed tuleb omavahel siduda, näiteks aja, masina või päringu tunnuse järgi, et leida rikke põhjus.
+
 **Telemeetria ja jälgitavus ei ole sama.** Telemeetria on andmed: mõõdikud, sündmused, logid ja jäljed. Jälgitavus on see, mida nende andmetega teed, et süsteemist aru saada.
 
-??? note "Tabel 1.6. Mis probleeme jälgitavus lahendab"
+??? note "Tabel 1.7. Mis probleeme jälgitavus lahendab"
     | Probleem | Näide |
     |---|---|
     | aeg-ajalt tekkiv viga | tellimus ebaõnnestub kord päevas ja keegi ei oska seda korrata |
@@ -147,7 +159,7 @@ Sama sõna kasutatakse ka teises tähenduses. **Andmete jälgitavus** (data obse
 
 Erinevus on selles, kuidas rike paistab. Kui rakendus seisab, märkavad kasutajad seda kohe. Kui andmed on vigased, töötab kõik edasi, töölaud näitab valesid numbreid ja neid võidakse kasutada kaua, enne kui keegi märkab.
 
-??? note "Tabel 1.7. Andmete jälgitavuse viis tunnust"
+??? note "Tabel 1.8. Andmete jälgitavuse viis tunnust"
     | Tunnus | Küsimus | Näide rikkest |
     |---|---|---|
     | värskus (freshness) | millal andmed viimati uuenesid? | öine laadimine jäi seisma, aruanne näitab eilseid numbreid |
@@ -162,7 +174,7 @@ Seda kursusel lähemalt ei käsitleta. Tööriistad on sarnased: andmetöötluse
 
 Mõõdikuid on tuhandeid. Kaks levinud meetodit aitavad valida. Masina ressursside jaoks on Brendan Greggi [USE meetod](https://www.brendangregg.com/usemethod.html): iga ressursi kohta küsitakse kasutust (utilization), küllastust ehk ootejärjekorda (saturation) ja vigu (errors).
 
-??? note "Tabel 1.8. USE meetod masina ressurssidele"
+??? note "Tabel 1.9. USE meetod masina ressurssidele"
     | Ressurss | Kasutus | Küllastus | Vead |
     |---|---|---|---|
     | protsessor | protsessori kasutus % | koormus `uptime` väljundis | |
@@ -189,7 +201,7 @@ Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.googl
 
 **Kuhu see läheb.** Suund on, et andmed antakse välja ühel standardsel moel ja tööriista saab valida või vahetada. Mõõdik, logi ja jälg seotakse ühise tunnusega, nii et alarmist saab liikuda sama päringu logide ja jälje juurde. Uuemad lahendused koguvad andmeid otse Linuxi tuumast tehnoloogiaga eBPF, ilma rakenduse koodi muutmata.
 
-??? note "Tabel 1.9. Tööriistad kursusel ja nende kõrval"
+??? note "Tabel 1.10. Tööriistad kursusel ja nende kõrval"
     | Andmeliik | Kursusel | Levinud teised | Kohtumine |
     |---|---|---|---|
     | mõõdikud | Prometheus, node_exporter | Zabbix, InfluxDB, VictoriaMetrics | K1, K2 |
@@ -294,7 +306,7 @@ Mõõdiku nimi koos siltide väärtustega määrab ühe **aegrea**. Kui masin av
 
 Kui päring ei leia midagi, võib viga olla viies kohas. Kontrolli neid järjest, sest iga samm eeldab eelmist.
 
-??? note "Tabel 1.10. Kogumise kontroll sammhaaval"
+??? note "Tabel 1.11. Kogumise kontroll sammhaaval"
     | Samm | Kus | Kuidas kontrollid | Mida tulemus tõendab |
     |---|---|---|---|
     | 1. Exporter töötab | jälgitav masin | `systemctl is-active node_exporter` | systemd peab teenust aktiivseks |
@@ -341,7 +353,7 @@ Jagamine paneb kokku read, millel on samad sildid, seega saad iga masina kohta �
 
 Sildifiltris saab kasutada nelja operaatorit ([Querying basics](https://prometheus.io/docs/prometheus/latest/querying/basics/#time-series-selectors)):
 
-??? note "Tabel 1.11. Sildifiltri operaatorid"
+??? note "Tabel 1.12. Sildifiltri operaatorid"
     | Operaator | Tähendus | Näide |
     |---|---|---|
     | `=` | võrdne | `node_filesystem_avail_bytes{mountpoint="/"}` |

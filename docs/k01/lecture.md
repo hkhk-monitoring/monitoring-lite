@@ -79,9 +79,11 @@ Rikke juures loetakse kahte aega. **Avastamise aeg** on rikke algusest selle mä
 
 ## 3. Seire ja jälgitavus
 
-**Seire** (monitoring) vastab küsimustele, mis on ette teada. Töölaual on protsessori kasutus, sest seda tahetakse näha, ja alarm teatab, kui ketas on 90% täis. Seire töötab hästi rikete puhul, mida on varem nähtud.
+**Seire** (monitoring) vastab küsimustele, mis on ette teada. Töölaual on protsessori kasutus, sest seda tahetakse näha, ja alarm teatab, kui ketas on 90% täis. Seire eeldab, et võimalikud rikked on ette teada, ja töötab hästi nende puhul, mida on varem nähtud.
 
-**Jälgitavus** (observability) tähendab, et süsteemist kogutud mõõdikutest, logidest ja jälgedest saab vastata ka küsimusele, mida keegi ette ei osanud küsida. Näiteks kasutajad ütlevad, et leht on pärast uut versiooni aeglane, ja ükski alarm ei andnud teada.
+**Jälgitavus** (observability) on võime öelda süsteemi tegelik olek nende andmete põhjal, mida süsteem ise tekitab: logide, mõõdikute ja jälgede põhjal. Dynatrace'i artikkel [What is observability?](https://www.dynatrace.com/news/blog/what-is-observability-2/) kirjeldab vahet nii: seire jaoks seadistatakse töölauad ja alarmid oodatud rikete järgi, jälgitavuse jaoks kogutakse keskkonnast piisavalt andmeid, et uurida ka riket, mida keegi ei oodanud. Selliseid rikkeid nimetatakse inglise keeles *unknown unknowns*.
+
+Näiteks kasutajad ütlevad, et leht on pärast uut versiooni aeglane, ja ükski alarm ei andnud teada.
 
 ??? note "Tabel 1.2. Aeglane leht: mida iga andmeliik näitab"
     | Andmeliik | Mida näitab |
@@ -90,13 +92,25 @@ Rikke juures loetakse kahte aega. **Avastamise aeg** on rikke algusest selle mä
     | logi | samal ajal on palju aeglaseid päringuid ühe ja sama SQL-lausega |
     | jälg | ühe kasutaja päringust kulub 4,5 sekundit 5-st andmebaasi sammus |
 
+Jälgitavus on muutunud tähtsaks, sest süsteemid on hajusad. Üks rakendus koosneb mitmest teenusest, mis töötavad konteinerites eri masinates, ja konteinereid luuakse ning kustutatakse pidevalt. Andmeid on palju ja rike ühes teenuses paistab sageli välja hoopis teises. Kolme andmeliigi kõrval on seetõttu vaja ka **konteksti**: millises masinas ja konteineris teenus töötab, millistest teenustest see sõltub ja milline versioon on paigaldatud. Kasutaja vaatest annavad lisateavet **sünteetilised kontrollid**, mis avavad lehte regulaarselt nagu kasutaja, ja tegelike kasutajate mõõdetud laadimisajad.
+
+??? note "Tabel 1.3. Mis jälgitavust takistab"
+    | Takistus | Mida see tähendab |
+    |---|---|
+    | andmed on eraldi tööriistades | mõõdikud ühes, logid teises, jäljed kolmandas süsteemis ja neid ei saa omavahel siduda |
+    | andmeid on liiga palju | kõike kogudes kasvab maht ja hind, olulist on raske leida |
+    | rakendus ei anna andmeid välja | koodi tuleb lisada mõõdikud ja jäljed, seda nimetatakse instrumenteerimiseks |
+    | eri teenustel eri vormingud | sama asja nimetatakse eri teenustes eri nimega |
+
+Viimase kahe takistuse jaoks on loodud avatud standard [OpenTelemetry](https://opentelemetry.io/docs/what-is-opentelemetry/): rakendus annab mõõdikud, logid ja jäljed välja ühel moel ning need saab saata ükskõik millisesse tööriista. Seda kasutad K4-s.
+
 Töökohas on vaja mõlemat. Seire annab teada tuntud riketest, jälgitavus aitab leida põhjuse, kui juhtub midagi uut. Kursus liigub samas järjekorras: K1 ja K2 on seire, K3 ja K4 lisavad logid ja jäljed, K5 kasutab kõike koos.
 
 ## 4. Mida jälgida
 
 Mõõdikuid on tuhandeid. Kaks levinud meetodit aitavad valida. Masina ressursside jaoks on Brendan Greggi [USE meetod](https://www.brendangregg.com/usemethod.html): iga ressursi kohta küsitakse kasutust (utilization), küllastust ehk ootejärjekorda (saturation) ja vigu (errors).
 
-??? note "Tabel 1.3. USE meetod masina ressurssidele"
+??? note "Tabel 1.4. USE meetod masina ressurssidele"
     | Ressurss | Kasutus | Küllastus | Vead |
     |---|---|---|---|
     | protsessor | protsessori kasutus % | koormus `uptime` väljundis | |
@@ -110,7 +124,7 @@ Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.googl
 
 Iga andmeliigi jaoks on oma tööriistad. Grafana näitab kõiki kolme ühel töölaual ja OpenTelemetry on standard, millega rakendus annab mõõdikud, logid ja jäljed välja ühel moel.
 
-??? note "Tabel 1.4. Tööriistad kursusel ja nende kõrval"
+??? note "Tabel 1.5. Tööriistad kursusel ja nende kõrval"
     | Andmeliik | Kursusel | Levinud teised | Kohtumine |
     |---|---|---|---|
     | mõõdikud | Prometheus, node_exporter | Zabbix, InfluxDB, VictoriaMetrics | K1, K2 |
@@ -214,7 +228,7 @@ Mõõdiku nimi koos siltide väärtustega määrab ühe **aegrea**. Kui masin av
 
 Kui päring ei leia midagi, võib viga olla viies kohas. Kontrolli neid järjest, sest iga samm eeldab eelmist.
 
-??? note "Tabel 1.5. Kogumise kontroll sammhaaval"
+??? note "Tabel 1.6. Kogumise kontroll sammhaaval"
     | Samm | Kus | Kuidas kontrollid | Mida tulemus tõendab |
     |---|---|---|---|
     | 1. Exporter töötab | jälgitav masin | `systemctl is-active node_exporter` | systemd peab teenust aktiivseks |
@@ -261,7 +275,7 @@ Jagamine paneb kokku read, millel on samad sildid, seega saad iga masina kohta �
 
 Sildifiltris saab kasutada nelja operaatorit ([Querying basics](https://prometheus.io/docs/prometheus/latest/querying/basics/#time-series-selectors)):
 
-??? note "Tabel 1.6. Sildifiltri operaatorid"
+??? note "Tabel 1.7. Sildifiltri operaatorid"
     | Operaator | Tähendus | Näide |
     |---|---|---|
     | `=` | võrdne | `node_filesystem_avail_bytes{mountpoint="/"}` |

@@ -115,6 +115,24 @@ ssh -t vm2 "sudo dnf install -y epel-release && sudo dnf install -y stress-ng &&
 
 `-t` annab `sudo`-le terminali, kus ta saab parooli küsida.
 
+### 1.1 Masin käsitsi
+
+Enne kui monitooring andmeid kogub, vaata, mida vm2 ise näitab. Samad arvud kogub node_exporter hiljem iga 15 sekundi järel.
+
+```bash
+ssh vm2 "journalctl -p err -b --no-pager | tail -5"
+ssh vm2 "free -h; df -h /; uptime"
+```
+
+??? success "Oodatav tulemus"
+    `journalctl` näitab selle käivituse veateateid või rida `-- No entries --`. `free` näitab mälu veergudega `total`, `used` ja `available`, `df` juurfailisüsteemi suurust ja vaba ruumi, `uptime` koormust viimase 1, 5 ja 15 minuti keskmisena.
+
+??? question "Küsimus"
+    Mida sa nende käskudega ei saa teada?
+
+    ??? success "Vastus"
+        Käsud ei näita, milline oli olukord tund aega tagasi. vm1 ja vm3 andmete nägemiseks tuleb igasse eraldi sisse logida. Kui ketas hakkab täis saama, ei teata sellest keegi. Osades 2–7 kogud need arvud kõigist masinatest Prometheusesse ja vaatad neid ajas.
+
 ## Osa 2 · node_exporter käsitsi vm2-s
 
 Enne playbook'i teed paigalduse ühes masinas käsitsi, et näha iga sammu tulemust. Hiljem kirjutad samad sammud playbook'iks ja siis tead, mida iga ülesanne teeb.

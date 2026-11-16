@@ -126,13 +126,43 @@ Jälgitavus on muutunud tähtsaks, sest süsteemid on hajusad. Üks rakendus koo
     | rakendus ei anna andmeid välja | koodi tuleb lisada mõõdikud ja jäljed, seda nimetatakse instrumenteerimiseks |
     | eri teenustel eri vormingud | sama asja nimetatakse eri teenustes eri nimega |
 
+**Telemeetria ja jälgitavus ei ole sama.** Telemeetria on andmed: mõõdikud, sündmused, logid ja jäljed. Jälgitavus on see, mida nende andmetega teed, et süsteemist aru saada.
+
+??? note "Tabel 1.6. Mis probleeme jälgitavus lahendab"
+    | Probleem | Näide |
+    |---|---|
+    | aeg-ajalt tekkiv viga | tellimus ebaõnnestub kord päevas ja keegi ei oska seda korrata |
+    | aeglus | leht avaneb 8 sekundit, aga ükski masin ei ole ülekoormatud |
+    | rike levib teenuselt teenusele | andmebaas aeglustub, rakenduse ühendused saavad otsa, veebiserver annab vea 502 |
+    | uue versiooni mõju | kas pärast tänast paigaldust on vigu rohkem kui eile? |
+    | mis hiljuti muutus? | rike algas kell 14.05, samal minutil paigaldati uus konfiguratsioon |
+
+Rakenduse jälgitavus algab kolmest sammust. Kõigepealt lisatakse rakendusse telemeetria väljaandmine, tavaliselt OpenTelemetry teegiga. Seejärel kogutakse logid, mõõdikud ja jäljed keskselt. Lõpuks analüüsitakse neid tööriistaga, kus need on omavahel seotud. K1 teeb sama masina tasemel: node_exporter annab andmed välja, Prometheus kogub ja Grafana näitab.
+
 Töökohas on vaja mõlemat. Seire annab teada tuntud riketest, jälgitavus aitab leida põhjuse, kui juhtub midagi uut. Kursus liigub samas järjekorras: K1 ja K2 on seire, K3 ja K4 lisavad logid ja jäljed, K5 kasutab kõike koos.
 
-## 4. Mida jälgida
+## 4. Andmete jälgitavus
+
+Sama sõna kasutatakse ka teises tähenduses. **Andmete jälgitavus** (data observability) ei jälgi servereid ega rakendusi, vaid andmeid ennast: kas aruandesse ja andmebaasi jõudnud andmed on värsked, täielikud ja õiged. IBM-i artikkel [What is data observability?](https://www.ibm.com/think/topics/data-observability) määratleb selle kui andmete jälgimise, haldamise ja hoidmise nii, et nende kvaliteet, kättesaadavus ja usaldusväärsus oleksid tagatud.
+
+Erinevus on selles, kuidas rike paistab. Kui rakendus seisab, märkavad kasutajad seda kohe. Kui andmed on vigased, töötab kõik edasi, töölaud näitab valesid numbreid ja neid võidakse kasutada kaua, enne kui keegi märkab.
+
+??? note "Tabel 1.7. Andmete jälgitavuse viis tunnust"
+    | Tunnus | Küsimus | Näide rikkest |
+    |---|---|---|
+    | värskus (freshness) | millal andmed viimati uuenesid? | öine laadimine jäi seisma, aruanne näitab eilseid numbreid |
+    | jaotus (distribution) | kas väärtused on lubatud vahemikus? | vanuse väljal on väärtus 250 |
+    | maht (volume) | kas tuli oodatud hulk ridu? | tavaliselt 10 000 tellimust päevas, täna 12 |
+    | skeem (schema) | kas andmete ülesehitus on sama? | allikas nimetas veeru ümber ja edasine töötlus katkes |
+    | päritolu (lineage) | kust andmed tulid ja mis teel muutus? | vigane väärtus tuli kolmanda süsteemi liidesest |
+
+Seda kursusel lähemalt ei käsitleta. Tööriistad on sarnased: andmetöötluse iga samm annab välja mõõdikud, need salvestatakse aegridadena ja alarm teatab, kui värskus, maht või jaotus läheb lubatud piiridest välja.
+
+## 5. Mida jälgida
 
 Mõõdikuid on tuhandeid. Kaks levinud meetodit aitavad valida. Masina ressursside jaoks on Brendan Greggi [USE meetod](https://www.brendangregg.com/usemethod.html): iga ressursi kohta küsitakse kasutust (utilization), küllastust ehk ootejärjekorda (saturation) ja vigu (errors).
 
-??? note "Tabel 1.6. USE meetod masina ressurssidele"
+??? note "Tabel 1.8. USE meetod masina ressurssidele"
     | Ressurss | Kasutus | Küllastus | Vead |
     |---|---|---|---|
     | protsessor | protsessori kasutus % | koormus `uptime` väljundis | |
@@ -142,7 +172,7 @@ Mõõdikuid on tuhandeid. Kaks levinud meetodit aitavad valida. Masina ressurssi
 
 Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.google/sre-book/monitoring-distributed-systems/): vastuse aeg (latency), päringute hulk (traffic), vigade osakaal (errors) ja küllastus (saturation). Need näitavad, mida kasutaja kogeb. Täna jälgid USE meetodi järgi masinaid, teenuse signaalid tulevad K2-s ja K4-s.
 
-## 5. Tööriistad: mis oli enne, mis on praegu, kuhu see läheb
+## 6. Tööriistad: mis oli enne, mis on praegu, kuhu see läheb
 
 <figure markdown="span">
   ![Ajajoon: 1999 Nagios kontrollib, kas teenus vastab; 2001 Zabbix agendi, andmebaasi ja graafikutega; 2008 Graphite aegread; 2010 Elasticsearch logid ühte kohta; 2012 Prometheus; 2014 Grafana; 2019 OpenTelemetry üks standard; praegu sama päringu mõõdik, logi ja jälg üksteise kõrval](../images/k01_ajalugu.svg)
@@ -159,7 +189,7 @@ Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.googl
 
 **Kuhu see läheb.** Suund on, et andmed antakse välja ühel standardsel moel ja tööriista saab valida või vahetada. Mõõdik, logi ja jälg seotakse ühise tunnusega, nii et alarmist saab liikuda sama päringu logide ja jälje juurde. Uuemad lahendused koguvad andmeid otse Linuxi tuumast tehnoloogiaga eBPF, ilma rakenduse koodi muutmata.
 
-??? note "Tabel 1.7. Tööriistad kursusel ja nende kõrval"
+??? note "Tabel 1.9. Tööriistad kursusel ja nende kõrval"
     | Andmeliik | Kursusel | Levinud teised | Kohtumine |
     |---|---|---|---|
     | mõõdikud | Prometheus, node_exporter | Zabbix, InfluxDB, VictoriaMetrics | K1, K2 |
@@ -167,6 +197,7 @@ Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.googl
     | logid | Loki, Alloy | OpenSearch, Elastic Stack, Graylog | K3 |
     | jäljed | OpenTelemetry, Jaeger | Tempo, Zipkin | K4 |
     | töölaud | Grafana | Kibana, OpenSearch Dashboards | K1–K5 |
+    | kõik ühes | Grafana koos Loki ja Jaegeriga | Uptrace, SigNoz, Elastic Observability | K5 |
 
 Täna alustad mõõdikutest. Prometheus küsib mõõdikuid jälgitavatelt masinatelt, salvestab need aegridadena ja vastab päringutele.
 
@@ -175,7 +206,7 @@ Täna alustad mõõdikutest. Prometheus küsib mõõdikuid jälgitavatelt masina
   <figcaption>Joonis 1.2. Prometheuse ülesehitus: kogumine, aegridade andmebaas ja PromQL ([Prometheuse ülevaade](https://prometheus.io/docs/introduction/overview/)) (Talvik, 2026).</figcaption>
 </figure>
 
-## 6. Kes avab ühenduse
+## 7. Kes avab ühenduse
 
 Mõõdikute kogumisel on kaks küsimust: kes avab ühenduse ja milline komponent tagastab väärtused. Prometheuse puhul avab ühenduse Prometheus ja exporter tagastab korraga kõik oma mõõdikud. Seda nimetatakse **pull-mudeliks**. Kui jälgitav masin saadab andmed ise keskserverisse, on see **push-mudel**: nii töötavad näiteks Zabbixi aktiivne agent, Telegraf ja OpenTelemetry (K4).
 
@@ -192,7 +223,7 @@ Pull-mudelis peab jälgitavas masinas olema port lahti ja server peab teadma kõ
     ??? success "Vastus"
         Ei saa, sest pull-mudelis avab ühenduse Prometheus. Sellises olukorras sobib push-mudel: masin saadab andmed ise väljapoole, mida tulemüür tavaliselt lubab.
 
-## 7. Exporter ja /metrics
+## 8. Exporter ja /metrics
 
 **Exporter** on programm, mis loeb mõõdikud ja avaldab need HTTP-aadressil `/metrics`. Masina näitude jaoks on [node_exporter](https://github.com/prometheus/node_exporter). See loeb Linuxi tuuma faile kaustades `/proc` ja `/sys`, kust samu numbreid loevad ka käsud `free`, `df` ja `top`.
 
@@ -225,7 +256,7 @@ Mõõdikutüüpe on kaks, mida täna kasutad ([Metric types](https://prometheus.
     ??? success "Vastus"
         Ei tõenda. Brauser ühendub klassiarvutist, Prometheus aga vm3 konteinerist. Teel võivad olla teised tulemüürireeglid ja `prometheus.yml`-is võib olla vale aadress või port. Kogumist tõendab Prometheuse **Targets**-leht ja päring, mis leiab aegrea.
 
-## 8. Target, scrape ja silt
+## 9. Target, scrape ja silt
 
 Prometheus loeb oma seadeid failist `prometheus.yml`. Seal on kirjas, keda küsida ja kui tihti. Näite aadressid asenda oma laborimasinate aadressidega:
 
@@ -259,11 +290,11 @@ Mõõdiku nimi koos siltide väärtustega määrab ühe **aegrea**. Kui masin av
     ??? success "Vastus"
         32: neli protsessorit korda kaheksa `mode` väärtust.
 
-## 9. Kuidas kogumist kontrollida
+## 10. Kuidas kogumist kontrollida
 
 Kui päring ei leia midagi, võib viga olla viies kohas. Kontrolli neid järjest, sest iga samm eeldab eelmist.
 
-??? note "Tabel 1.8. Kogumise kontroll sammhaaval"
+??? note "Tabel 1.10. Kogumise kontroll sammhaaval"
     | Samm | Kus | Kuidas kontrollid | Mida tulemus tõendab |
     |---|---|---|---|
     | 1. Exporter töötab | jälgitav masin | `systemctl is-active node_exporter` | systemd peab teenust aktiivseks |
@@ -285,7 +316,7 @@ Kui päring ei leia midagi, võib viga olla viies kohas. Kontrolli neid järjest
     ??? success "Vastus"
         Võrk vm3 ja vm1 vahel töötab, sest vm1 vastas, aga keeldus ühendusest. Alusta sammust 1: kas `node_exporter` töötab vm1-s. Kui töötab, kontrolli sammu 2: kas port 9100 on tulemüüris lahti.
 
-## 10. PromQL kolme küsimuse kaudu
+## 11. PromQL kolme küsimuse kaudu
 
 Prometheuse päringukeel on [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/). Päringu kirjutad Prometheuse veebiliideses lehel **Query** või Grafana paneelis. Praktikumis koostad päringud kolmele küsimusele ja iga küsimus lisab päringukeelest ühe osa.
 
@@ -310,7 +341,7 @@ Jagamine paneb kokku read, millel on samad sildid, seega saad iga masina kohta �
 
 Sildifiltris saab kasutada nelja operaatorit ([Querying basics](https://prometheus.io/docs/prometheus/latest/querying/basics/#time-series-selectors)):
 
-??? note "Tabel 1.9. Sildifiltri operaatorid"
+??? note "Tabel 1.11. Sildifiltri operaatorid"
     | Operaator | Tähendus | Näide |
     |---|---|---|
     | `=` | võrdne | `node_filesystem_avail_bytes{mountpoint="/"}` |
@@ -363,7 +394,7 @@ Võrdlus, näiteks `< 20`, jätab alles ainult read, mille kohta tingimus kehtib
         2. Ei. Uus mõõtmine mõjutab tulemust kohe, aga täielikult jõuab muutus tulemusse alles umbes minuti jooksul.
         3. Protsent, iga masina kohta arv 0 ja 100 vahel.
 
-## 11. Grafana: andmeallikas, paneel ja töölaud
+## 12. Grafana: andmeallikas, paneel ja töölaud
 
 Prometheuse veebiliides sobib päringu koostamiseks ja kontrollimiseks. Igapäevaseks vaatamiseks kasutatakse [Grafanat](https://grafana.com/docs/grafana/latest/): see küsib andmed Prometheusest ja näitab neid töölaual. Grafana ise mõõdikuid ei kogu ega salvesta.
 

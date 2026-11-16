@@ -33,9 +33,9 @@ Kui `du` ebaõnnestub, peab skript lõppema veaga ega tohi viimast korrektset fa
 
 Täienda `konf/node_exporter.yml` nii, et see:
 
-- loob kausta `/var/lib/node_exporter/textfile` (omanik `root`, õigused `0755`);
+- loob kausta `/var/lib/node_exporter/textfile`, omanik `root` ja õigused `0755`;
 - lisab unit-faili real `ExecStart` võtme `--collector.textfile.directory=/var/lib/node_exporter/textfile`. Unit-faili muutus teavitab handler'it, mis taaskäivitab node_exporteri;
-- kopeerib skripti `/usr/local/bin/logimaht.sh` (omanik `root`, õigused `0755`);
+- kopeerib skripti `/usr/local/bin/logimaht.sh`, omanik `root` ja õigused `0755`;
 - käivitab skripti iga 5 minuti järel kasutajana `root` (`ansible.builtin.cron`). Kui `systemctl is-active crond` ei vasta `active`, lisa pakett `cronie` ja teenus `crond`.
 
 Käivita playbook kaks korda. Teisel korral on `changed=0`.
@@ -49,7 +49,7 @@ for ip in <vm1-IP> <vm2-IP>; do curl -fsS http://$ip:9100/metrics | grep '^logid
 ??? success "Oodatav tulemus"
     Mõlema masina kohta rida `logide_maht_baitides` arvuga. 5 minuti pärast on arv uuesti arvutatud.
 
-Kirjuta päring, mis näitab mõlema masina `/var/log` kettaruumikasutust mebibaitides (jaga `1024 * 1024`-ga), ja salvesta tulemus. `<sinu päring>` asemele kirjuta oma päring:
+Kirjuta päring, mis näitab mõlema masina `/var/log` kettaruumikasutust mebibaitides ja salvesta tulemus. `<sinu päring>` asemele kirjuta oma päring:
 
 ```bash
 ssh vm3 "curl -fsS localhost:9090/api/v1/query --data-urlencode 'query=<sinu päring>'" > logid/kodutoo-paring.json

@@ -4,7 +4,7 @@ tags:
   - Monitooring
 ---
 
-# Süsteemide monitooring (lühikursus)
+# Süsteemide monitooring
 
 Õpid jälgima masinaid ja teenuseid mõõdikute, alarmide, logide ja jälgede kaudu ning leidma rikke põhjuse andmete põhjal. Kursus jätkab DevOps Lite'i: kasutad samu kolme masinat, Ansible'it, Docker Compose'i ja Giti.
 
@@ -12,9 +12,9 @@ tags:
 
 | | |
 |---|---|
-| **Maht** | 5 kohtumist × 4 akadeemilist tundi (loeng kuni 30 min, ülejäänu praktikum) + 58 akadeemilist tundi iseseisvat tööd |
+| **Maht** | 5 kohtumist × 4 akadeemilist tundi ja 58 akadeemilist tundi iseseisvat tööd. Loeng on kuni 30 minutit, ülejäänu on praktikum. |
 | **Eeldused** | DevOps Lite või samaväärne: Linuxi käsurida, SSH, Ansible'i playbook, Docker Compose, Git |
-| **Keskkond** | kooli Proxmoxis kolm AlmaLinux 9 VM-i: vm1 on control node (Ansible, Git, repositoorium), vm3-s töötab Docker. Ühendus VS Code Remote-SSH kaudu, kodust VPN-iga |
+| **Keskkond** | kooli Proxmoxis kolm AlmaLinux 9 VM-i: vm1 on control node, kus on Ansible, Git ja sinu repositoorium. vm3-s töötab Docker. Ühendus VS Code Remote-SSH kaudu, kodust VPN-iga |
 | **Küsimused ja teated** | [github.com/hkhk-automation/its25-arutelu/discussions](https://github.com/hkhk-automation/its25-arutelu/discussions) |
 
 ??? abstract "Kursuse õpiväljundid"
@@ -31,7 +31,7 @@ tags:
 
 | | Teema | Tööriistad |
 |---|---|---|
-| **[K1](k01/lecture.md)** | Mõõdikud: server küsib, exporter vastab, töölaud | node_exporter (Ansible), Prometheus ja Grafana (Docker Compose), PromQL |
+| **[K1](k01/lecture.md)** | Mõõdikud: server küsib, exporter vastab, töölaud | node_exporter Ansible'iga, Prometheus ja Grafana Docker Compose'iga, PromQL |
 | **K2** | Alarmid ja kättesaadavus | Prometheuse reeglid, Alertmanager, Blackbox exporter |
 | **K3** | Logid sildi järgi | Loki, Grafana Alloy |
 | **K4** | Päringu teekond | OpenTelemetry, Jaeger, näidisrakendus |

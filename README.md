@@ -1,3 +1,3 @@
 # monitoring-lite
 
-Täiskasvanute monitooringu lühikursus (20 h). Praegu skelett.
+ITS-25 monitooringu kursuse sait: viis kohtumist, igaüks neli akadeemilist tundi.

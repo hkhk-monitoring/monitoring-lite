@@ -36,7 +36,7 @@ Kasutatavad versioonid on node_exporter 1.12.1, Prometheus 3.15.1 ja Grafana 13.
     |---|---|---|
     | vm1 | repositoorium, Ansible, node_exporter | kirjutad playbook'i ja seaded, käivitad `ansible-playbook`, salvestad tõendid |
     | vm2 | node_exporter | paigaldad node_exporteri esmalt käsitsi, siis playbook'iga |
-    | vm3 | Prometheus ja Grafana (Docker Compose) | käivitad Prometheuse ja Grafana |
+    | vm3 | Prometheus ja Grafana Docker Compose'iga | käivitad Prometheuse ja Grafana |
     | klassiarvuti | brauser | vaatad Prometheuse ja Grafana veebiliidest |
 
 Käskudes on masinate nimed `vm2` ja `vm3`. Kui `ssh vm2 hostname` ei vasta, lisa vm1 failile `~/.ssh/config` nimed koos IP-aadressidega:
@@ -79,7 +79,7 @@ ansible-galaxy collection list ansible.posix
 
 Prometheuse ja Grafana veebiliides on laborivõrgus kõigile avatud. Ära ava neid internetti. Kodust kasutad neid VPN-iga.
 
-Ava Classroom 50 link (selle annab juhendaja) ja klooni oma repositoorium vm1-sse:
+Classroom 50 lingi annab juhendaja. Ava see ja klooni oma repositoorium vm1-sse:
 
 ```bash
 git clone <sinu-repo-URL>
@@ -190,7 +190,7 @@ curl -s localhost:9100/metrics | grep '^node_memory_MemAvailable_bytes'
 ```
 
 ??? success "Oodatav tulemus"
-    `active` ja rida `node_memory_MemAvailable_bytes 1.47e+09` (sinu arv on teine). See on sama väärtus baitides, mida `free -b` näitab veerus `available`.
+    `active` ja rida `node_memory_MemAvailable_bytes 1.47e+09` ja sinu arv on teine. See on sama väärtus baitides, mida `free -b` näitab veerus `available`.
 
 ??? warning "Kui `systemctl status node_exporter` näitab `status=203/EXEC`"
     systemd ei saa programmi käivitada. Kontrolli SELinuxi silti: `ls -Z /usr/local/bin/node_exporter`. Kui seal on `user_tmp_t`, paranda: `sudo restorecon -v /usr/local/bin/node_exporter`.
@@ -281,7 +281,7 @@ ansible-playbook -i konf/inventory.ini konf/node_exporter.yml -K
     Ülesanne on vm1-s `changed`. vm2-s laadisid osas 2 sama arhiivi kausta `/tmp`, seal on see `ok`, kui fail on alles ja kontrollsumma klapib.
 
 ??? question "Kontrollsumma kuju"
-    Leia `ansible-doc ansible.builtin.get_url` väljundist parameetri `checksum` kirjeldus (kirjuta `/checksum` ja vajuta **Enter**). Mis kujul saab kontrollsumma anda?
+    Leia `ansible-doc ansible.builtin.get_url` väljundist parameetri `checksum` kirjeldus: kirjuta `/checksum` ja vajuta **Enter**. Mis kujul saab kontrollsumma anda?
 
     ??? success "Vastus"
         Kahel kujul: `<algoritm>:<summa>` otse või `<algoritm>:<URL>`, kus URL viitab failile, milles on summa koos failinimega.
@@ -328,7 +328,7 @@ Alates siit kirjutad ülesanded ise. Lisa ülesanne, mis teeb sama, mis osas 2 k
 
 ### 4.4 Unit-fail ja handler
 
-Lisa ülesanne, mis kirjutab faili `/etc/systemd/system/node_exporter.service` õigustega `0644` ja sisuga osast 2 (moodul `copy`, parameeter `content: |`). Ülesanne teavitab handler'it `node_exporter uuesti`. Handler taaskäivitab teenuse mooduliga `ansible.builtin.systemd_service`, aga enne peab systemd unit-faili uuesti lugema. Leia `ansible-doc ansible.builtin.systemd_service` väljundist parameeter, mis teeb `daemon-reload`-i.
+Lisa ülesanne, mis kirjutab faili `/etc/systemd/system/node_exporter.service` õigustega `0644` ja sisuga osast 2. Sobib moodul `copy` parameetriga `content: |`. Ülesanne teavitab handler'it `node_exporter uuesti`. Handler taaskäivitab teenuse mooduliga `ansible.builtin.systemd_service`, aga enne peab systemd unit-faili uuesti lugema. Leia `ansible-doc ansible.builtin.systemd_service` väljundist parameeter, mis teeb `daemon-reload`-i.
 
 ??? example "Näidislahendus: unit-fail ja handler"
     ```yaml
@@ -370,7 +370,7 @@ Lisa ülesanne, mis kirjutab faili `/etc/systemd/system/node_exporter.service` �
 
 ### 4.5 Teenus ja port
 
-Need kaks ülesannet teevad sama, mis osas 2 `systemctl enable --now` ja `firewall-cmd`. Teenus `node_exporter` töötab ja käivitub koos masinaga (moodul `systemd_service`). Port `9100/tcp` on lubatud kohe ja jääb alles pärast taaskäivitust (moodul `ansible.posix.firewalld`, `immediate` ja `permanent`).
+Need kaks ülesannet teevad sama, mis osas 2 `systemctl enable --now` ja `firewall-cmd`. Teenus `node_exporter` töötab ja käivitub koos masinaga, selleks on moodul `systemd_service`. Port `9100/tcp` on lubatud kohe ja jääb alles pärast taaskäivitust, selleks on moodul `ansible.posix.firewalld` parameetritega `immediate` ja `permanent`.
 
 ??? example "Näidislahendus: teenus ja port"
     ```yaml
@@ -542,7 +542,7 @@ node_memory_MemAvailable_bytes{instance="<vm2-IP>:9100"}
 Masinas on ka mõõdik `node_memory_MemFree_bytes`. Kontrolli, kumb on suurem, ja seejärel muuda päringut nii, et see näitab iga masina saadaval olevat mälu protsentides kogu mälust (`node_memory_MemTotal_bytes`).
 
 ??? tip "Vihje"
-    Kaks mõõdikut saab jagada nagu arve, Prometheus paaritab read samade siltide järgi (loengu joonis 1.8). Protsendi saamiseks korruta tulemus.
+    Kaks mõõdikut saab jagada nagu arve, Prometheus paaritab read samade siltide järgi, nagu on loengu joonisel 1.8. Protsendi saamiseks korruta tulemus.
 
 ??? success "Oodatav tulemus"
     `MemAvailable` on suurem kui `MemFree`. `MemFree` jätab välja puhvri- ja vahemälu, mille tuum vajadusel vabastab. Osakaalu päring `node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100` annab iga masina kohta arvu 0 ja 100 vahel.
@@ -568,7 +568,7 @@ node_cpu_seconds_total{mode="idle"}
 rate(node_cpu_seconds_total{mode="idle"}[1m])
 ```
 
-Kolmanda ja neljanda osa koostad ise: esmalt üks rida masina kohta (protsessorite keskmine), siis jõudeaja osakaalust protsessori kasutus protsentides.
+Kolmanda ja neljanda osa koostad ise: esmalt protsessorite keskmine, üks rida masina kohta, siis jõudeaja osakaalust protsessori kasutus protsentides.
 
 ??? tip "Vihje"
     Keskmise silti `instance` kaupa annab koondamisoperaator `avg` koos võtmesõnaga `by` ([Aggregation operators](https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators)). Kasutus on see osa ajast, mis ei olnud jõudeaeg.
@@ -596,7 +596,7 @@ date +%T; ssh vm2 'stress-ng --cpu $(nproc) --timeout 60s'; date +%T
 Kirjuta päring, mis tagastab ainult masinad, kus juurfailisüsteemis on vaba ruumi alla 99%. Seejärel muuda piiri nii, et tulemusse jääb ainult üks masin. K2-s saab sellisest päringust alarmireegel.
 
 ??? tip "Vihje"
-    Võta oma 6.2 päring ja lisa selle lõppu võrdlus (loengu joonis 1.12). Tühi tulemus tähendab, et tingimus ei kehti ühegi masina kohta.
+    Võta oma 6.2 päring ja lisa selle lõppu võrdlus nagu loengu joonisel 1.12. Tühi tulemus tähendab, et tingimus ei kehti ühegi masina kohta.
 
 ## Osa 7 · Grafana
 
@@ -670,7 +670,7 @@ Salvesta töölaud repositooriumisse. Töölaua menüüs **Export → Export as 
     Millal kasutaksid valmis töölauda ja millal oma paneeli?
 
     ??? success "Vastus"
-        Valmis töölaud annab kiire ülevaate kõigest, mida exporter avaldab. Kindla küsimuse jaoks (millises masinas on mälu kõige vähem) on oma paneel selgem: seal on ainult vajalik päring, õige ühik ja masinate nimed legendis.
+        Valmis töölaud annab kiire ülevaate kõigest, mida exporter avaldab. Kindla küsimuse jaoks, näiteks millises masinas on mälu kõige vähem, on oma paneel selgem: seal on ainult vajalik päring, õige ühik ja masinate nimed legendis.
 
 ## Osa 8 · Kokkuvõte
 

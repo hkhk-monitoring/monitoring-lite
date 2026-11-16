@@ -1,0 +1,65 @@
+<svg viewBox="0 0 960 330" xmlns="http://www.w3.org/2000/svg" font-family="Inter, -apple-system, sans-serif">
+  <rect width="960" height="330" fill="#ffffff"/>
+  <text x="480" y="28" text-anchor="middle" font-size="18" font-weight="700" fill="#263238">Kuidas monitooring on muutunud</text>
+  <line x1="40" y1="150" x2="920" y2="150" stroke="#90a4ae" stroke-width="3"/>
+  <g font-size="12" fill="#263238" text-anchor="middle">
+    <circle cx="80" cy="150" r="9" fill="#546e7a"/>
+    <text x="80" y="128" font-weight="700" font-size="14">1999</text>
+    <text x="80" y="178" font-weight="700">Nagios</text>
+    <text x="80" y="195">kas teenus vastab?</text>
+    <text x="80" y="210">OK, WARNING,</text>
+    <text x="80" y="225">CRITICAL</text>
+
+    <circle cx="190" cy="150" r="9" fill="#546e7a"/>
+    <text x="190" y="128" font-weight="700" font-size="14">2001</text>
+    <text x="190" y="178" font-weight="700">Zabbix</text>
+    <text x="190" y="195">agent masinas,</text>
+    <text x="190" y="210">andmebaas,</text>
+    <text x="190" y="225">graafikud</text>
+
+    <circle cx="300" cy="150" r="9" fill="#546e7a"/>
+    <text x="300" y="128" font-weight="700" font-size="14">2008</text>
+    <text x="300" y="178" font-weight="700">Graphite</text>
+    <text x="300" y="195">aegread ja</text>
+    <text x="300" y="210">graafikud</text>
+
+    <circle cx="410" cy="150" r="9" fill="#546e7a"/>
+    <text x="410" y="128" font-weight="700" font-size="14">2010</text>
+    <text x="410" y="178" font-weight="700">Elasticsearch</text>
+    <text x="410" y="195">logid ühte kohta,</text>
+    <text x="410" y="210">täistekstiotsing</text>
+
+    <circle cx="520" cy="150" r="11" fill="#ff8f00"/>
+    <text x="520" y="128" font-weight="700" font-size="14">2012</text>
+    <text x="520" y="178" font-weight="700" fill="#e65100">Prometheus</text>
+    <text x="520" y="195">SoundCloud,</text>
+    <text x="520" y="210">server küsib ise,</text>
+    <text x="520" y="225">sildid</text>
+
+    <circle cx="630" cy="150" r="11" fill="#ff8f00"/>
+    <text x="630" y="128" font-weight="700" font-size="14">2014</text>
+    <text x="630" y="178" font-weight="700" fill="#e65100">Grafana</text>
+    <text x="630" y="195">üks töölaud</text>
+    <text x="630" y="210">mitmest</text><text x="630" y="225">allikast</text>
+
+    <circle cx="740" cy="150" r="11" fill="#00796b"/>
+    <text x="740" y="128" font-weight="700" font-size="14">2019</text>
+    <text x="740" y="178" font-weight="700" fill="#004d40">OpenTelemetry</text>
+    <text x="740" y="195">üks standard</text>
+    <text x="740" y="210">mõõdikud, logid</text>
+    <text x="740" y="225">ja jäljed</text>
+
+    <circle cx="860" cy="150" r="11" fill="#00796b"/>
+    <text x="860" y="128" font-weight="700" font-size="14">praegu</text>
+    <text x="860" y="178" font-weight="700" fill="#004d40">kõik seotud</text>
+    <text x="860" y="195">sama päringu</text>
+    <text x="860" y="210">mõõdik, logi, jälg</text>
+    <text x="860" y="225">üksteise kõrval</text>
+  </g>
+  <g font-size="12" fill="#546e7a">
+    <rect x="40" y="262" width="400" height="44" rx="6" fill="#eceff1"/>
+    <text x="240" y="289" text-anchor="middle">enne: iga tööriist kogub oma andmed oma moel</text>
+    <rect x="520" y="262" width="400" height="44" rx="6" fill="#e0f2f1"/>
+    <text x="720" y="289" text-anchor="middle" fill="#004d40">suund: andmed ühel moel, tööriista saab valida</text>
+  </g>
+</svg>

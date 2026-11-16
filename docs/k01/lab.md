@@ -560,7 +560,7 @@ node_memory_MemAvailable_bytes{instance="<vm2-IP>:9100"}
 Masinas on ka mõõdik `node_memory_MemFree_bytes`. Kontrolli, kumb on suurem, ja seejärel muuda päringut nii, et see näitab iga masina saadaval olevat mälu protsentides kogu mälust (`node_memory_MemTotal_bytes`).
 
 ??? tip "Vihje"
-    Kaks mõõdikut saab jagada nagu arve, Prometheus paaritab read samade siltide järgi, nagu on loengu joonisel 1.8. Protsendi saamiseks korruta tulemus.
+    Kaks mõõdikut saab jagada nagu arve, Prometheus paaritab read samade siltide järgi, nagu on loengu joonisel 1.9. Protsendi saamiseks korruta tulemus.
 
 ??? success "Oodatav tulemus"
     `MemAvailable` on suurem kui `MemFree`. `MemFree` jätab välja puhvri- ja vahemälu, mille tuum vajadusel vabastab. Osakaalu päring `node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100` annab iga masina kohta arvu 0 ja 100 vahel.
@@ -614,7 +614,7 @@ date +%T; ssh vm2 'stress-ng --cpu $(nproc) --timeout 60s'; date +%T
 Kirjuta päring, mis tagastab ainult masinad, kus juurfailisüsteemis on vaba ruumi alla 99%. Seejärel muuda piiri nii, et tulemusse jääb ainult üks masin. K2-s saab sellisest päringust alarmireegel.
 
 ??? tip "Vihje"
-    Võta oma 6.2 päring ja lisa selle lõppu võrdlus nagu loengu joonisel 1.12. Tühi tulemus tähendab, et tingimus ei kehti ühegi masina kohta.
+    Võta oma 6.2 päring ja lisa selle lõppu võrdlus nagu loengu joonisel 1.13. Tühi tulemus tähendab, et tingimus ei kehti ühegi masina kohta.
 
 ## Osa 7 · Grafana
 

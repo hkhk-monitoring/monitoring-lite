@@ -1,0 +1,46 @@
+<svg viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg" font-family="Inter, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="#ffffff"/>
+  <text x="600" y="28" text-anchor="middle" font-size="18" font-weight="700" fill="#263238">Viis levinud tööriista ja nende komplektid</text>
+  <g font-size="13" text-anchor="middle">
+    <rect x="20" y="50" width="224" height="330" rx="12" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="2"/>
+    <text x="132" y="78" font-size="15" font-weight="700" fill="#4a148c">Zabbix</text>
+    <text x="132" y="98" font-size="12" fill="#4a148c">kõik ühes</text>
+    <rect x="32" y="115" width="200" height="40" rx="6" fill="#ffffff" stroke="#6a1b9a"/><text x="132" y="140" fill="#263238">agent: saadab või vastab</text>
+    <rect x="32" y="165" width="200" height="40" rx="6" fill="#ffffff" stroke="#6a1b9a"/><text x="132" y="190" fill="#263238">server: kogub, triggerid</text>
+    <rect x="32" y="215" width="200" height="40" rx="6" fill="#ffffff" stroke="#6a1b9a"/><text x="132" y="240" fill="#263238">andmebaas: PostgreSQL</text>
+    <rect x="32" y="265" width="200" height="40" rx="6" fill="#ffffff" stroke="#6a1b9a"/><text x="132" y="290" fill="#263238">veebiliides, mallid</text>
+    <text x="132" y="340" font-size="12" fill="#4a148c">kursusel: võrdluseks</text>
+    <rect x="254" y="50" width="224" height="330" rx="12" fill="#fff8e1" stroke="#ff8f00" stroke-width="2"/>
+    <text x="366" y="78" font-size="15" font-weight="700" fill="#e65100">Prometheus</text>
+    <text x="366" y="98" font-size="12" fill="#e65100">mõõdikud ja alarmid</text>
+    <rect x="266" y="115" width="200" height="40" rx="6" fill="#ffffff" stroke="#ff8f00"/><text x="366" y="140" fill="#263238">exporter'id</text>
+    <rect x="266" y="165" width="200" height="40" rx="6" fill="#ffffff" stroke="#ff8f00"/><text x="366" y="190" fill="#263238">Prometheus: PromQL</text>
+    <rect x="266" y="215" width="200" height="40" rx="6" fill="#ffffff" stroke="#ff8f00"/><text x="366" y="240" fill="#263238">Alertmanager: teavitus</text>
+    <rect x="266" y="265" width="200" height="40" rx="6" fill="#ffffff" stroke="#ff8f00"/><text x="366" y="290" fill="#263238">Grafana: töölaud</text>
+    <text x="366" y="340" font-size="12" fill="#e65100">kursusel: K1, K2</text>
+    <rect x="488" y="50" width="224" height="330" rx="12" fill="#e0f2f1" stroke="#00796b" stroke-width="2"/>
+    <text x="600" y="78" font-size="15" font-weight="700" fill="#004d40">Grafana, LGTM</text>
+    <text x="600" y="98" font-size="12" fill="#004d40">mõõdikud, logid, jäljed</text>
+    <rect x="500" y="115" width="200" height="40" rx="6" fill="#ffffff" stroke="#00796b"/><text x="600" y="140" fill="#263238">Alloy: kogub</text>
+    <rect x="500" y="165" width="200" height="40" rx="6" fill="#ffffff" stroke="#00796b"/><text x="600" y="190" fill="#263238">Loki: logid</text>
+    <rect x="500" y="215" width="200" height="40" rx="6" fill="#ffffff" stroke="#00796b"/><text x="600" y="240" fill="#263238">Tempo: jäljed</text>
+    <rect x="500" y="265" width="200" height="40" rx="6" fill="#ffffff" stroke="#00796b"/><text x="600" y="290" fill="#263238">Mimir: mõõdikud</text>
+    <text x="600" y="340" font-size="12" fill="#004d40">kursusel: K1, K3</text>
+    <rect x="722" y="50" width="224" height="330" rx="12" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+    <text x="834" y="78" font-size="15" font-weight="700" fill="#0d47a1">Elastic Stack</text>
+    <text x="834" y="98" font-size="12" fill="#0d47a1">logid ja otsing</text>
+    <rect x="734" y="115" width="200" height="40" rx="6" fill="#ffffff" stroke="#1565c0"/><text x="834" y="140" fill="#263238">Beats, Elastic Agent</text>
+    <rect x="734" y="165" width="200" height="40" rx="6" fill="#ffffff" stroke="#1565c0"/><text x="834" y="190" fill="#263238">Logstash: töötleb</text>
+    <rect x="734" y="215" width="200" height="40" rx="6" fill="#ffffff" stroke="#1565c0"/><text x="834" y="240" fill="#263238">Elasticsearch: otsib</text>
+    <rect x="734" y="265" width="200" height="40" rx="6" fill="#ffffff" stroke="#1565c0"/><text x="834" y="290" fill="#263238">Kibana: töölaud</text>
+    <text x="834" y="340" font-size="12" fill="#0d47a1">kursusel: võrdluseks</text>
+    <rect x="956" y="50" width="224" height="330" rx="12" fill="#fbe9e7" stroke="#d84315" stroke-width="2"/>
+    <text x="1068" y="78" font-size="15" font-weight="700" fill="#bf360c">OpenTelemetry, Jaeger</text>
+    <text x="1068" y="98" font-size="12" fill="#bf360c">standard ja jäljed</text>
+    <rect x="968" y="115" width="200" height="40" rx="6" fill="#ffffff" stroke="#d84315"/><text x="1068" y="140" fill="#263238">SDK rakenduses</text>
+    <rect x="968" y="165" width="200" height="40" rx="6" fill="#ffffff" stroke="#d84315"/><text x="1068" y="190" fill="#263238">Collector: suunab</text>
+    <rect x="968" y="215" width="200" height="40" rx="6" fill="#ffffff" stroke="#d84315"/><text x="1068" y="240" fill="#263238">Jaeger: hoiab jälgi</text>
+    <rect x="968" y="265" width="200" height="40" rx="6" fill="#ffffff" stroke="#d84315"/><text x="1068" y="290" fill="#263238">Jaeger UI, Grafana</text>
+    <text x="1068" y="340" font-size="12" fill="#bf360c">kursusel: K4</text>
+  </g>
+</svg>

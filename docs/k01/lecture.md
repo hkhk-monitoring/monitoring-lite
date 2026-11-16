@@ -191,15 +191,36 @@ Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.googl
   <figcaption>Joonis 1.1. Monitooringu tööriistad ajas (Talvik, 2026).</figcaption>
 </figure>
 
-**Enne.** Esimesed monitooringu tööriistad, näiteks Nagios, mille esimene versioon ilmus 1999. aastal nime NetSaint all, kontrollisid kindla ajavahemiku järel, kas teenus vastab, ja andsid tulemuse kolmes olekus: OK, WARNING või CRITICAL. Zabbix lisas 2001. aastal masinasse agendi, salvestas väärtused andmebaasi ja joonistas graafikuid. Logid olid igas masinas eraldi ja neid otsiti käsuga `grep`, kuni Elasticsearch 2010. aastast koondas need ühte kohta. Iga tööriist kogus oma andmed oma moel ja neid oli raske kokku viia.
+**Enne.** Esimesed monitooringu tööriistad, näiteks Nagios, mille esimene versioon ilmus 1999. aastal nime NetSaint all, kontrollisid kindla ajavahemiku järel, kas teenus vastab, ja andsid tulemuse kolmes olekus: OK, WARNING või CRITICAL. Logid olid igas masinas eraldi ja neid otsiti käsuga `grep`. Iga tööriist kogus oma andmed oma moel ja neid oli raske kokku viia. Järgmised viis tööriista on tänapäeval kõige levinumad, igaühel on oma tugev külg.
 
-**Prometheus** on avatud lähtekoodiga mõõdikute süsteem. See tehti 2012. aastal SoundCloudis, sest olemasolevad tööriistad ei sobinud keskkonda, kus teenuseid tekib ja kaob pidevalt. Uus oli kaks asja: server küsib mõõdikud ise ja iga mõõdik kannab silte, mille järgi saab andmeid valida. 2016. aastal sai Prometheusest Kubernetese järel teine projekt sihtasutuses Cloud Native Computing Foundation. Praegu on see konteinerite ja Kubernetese mõõdikute tavaline valik ning versioon 3 võtab vastu ka OpenTelemetry andmeid.
+<figure markdown="span">
+  ![Viis tööriista ja nende komplektid: Zabbix agendi, serveri, andmebaasi ja veebiliidesega; Prometheus exporter'ite, Alertmanageri ja Grafanaga; Grafana komplekt Alloy, Loki, Tempo ja Mimiriga; Elastic Stack Beatsi, Logstashi, Elasticsearchi ja Kibanaga; OpenTelemetry SDK, Collector ja Jaeger](../images/k01_komplektid.svg)
+  <figcaption>Joonis 1.2. Viis levinud tööriista ja nende komplektid (Talvik, 2026).</figcaption>
+</figure>
 
-**Grafana** on töölaudade tööriist, mis tehti 2014. aastal. Enne seda oli igal süsteemil oma graafikute leht. Grafana näitab ühel töölaual andmeid mitmest allikast, näiteks Prometheusest, Zabbixist, Lokist ja andmebaasist. Praegu on Grafana Labsi tööriistadega võimalik hoida mõõdikud, logid ja jäljed samas kohas.
+### Zabbix
 
-**OpenTelemetry** on avatud standard ja tööriistade komplekt, millega rakendus ja teenus annavad telemeetria välja. Enne seda oli mõõdikute, logide ja jälgede jaoks eri teegid ning iga tootja nõudis oma agenti ja vormingut. OpenTelemetry tekkis 2019. aastal kahe varasema projekti, OpenTracingu ja OpenCensuse, liitmisel ning on samuti Cloud Native Computing Foundationi projekt. Rakendus annab andmed välja ühe protokolliga, mille nimi on OTLP, ja need võib saata Prometheusesse, Lokisse, Jaegerisse või kommertstootesse ilma koodi muutmata. K4-s kasutad seda ise.
+[Zabbix](https://www.zabbix.com/documentation/current/en/manual/introduction/overview) on kõik-ühes monitooringusüsteem: jälgitavas masinas töötab agent, server kogub andmed, hoiab neid relatsioonilises andmebaasis ja näitab veebiliideses, triggerid annavad alarmi. Selle tegi Aleksei Vladišev ja esimene versioon ilmus 2001. aastal, ettevõte asub Riias. Enne olid Nagiose-taolised kontrollid, mis ütlesid ainult, kas teenus vastab. Zabbix hakkas väärtusi ajas hoidma ja graafikuid joonistama ning mallidega sai sama seadistuse anda sadadele masinatele. Praegu on Zabbix levinud ettevõtete serverite ja võrguseadmete jälgimisel, sest seadistus käib veebiliideses ja valmis malle on palju. Suund on avatus teiste tööriistadega: Zabbix oskab lugeda Prometheuse mõõdikuid ja selle andmeid saab näidata Grafanas.
 
-**Kuhu see läheb.** Suund on, et andmed antakse välja ühel standardsel moel ja tööriista saab valida või vahetada. Mõõdik, logi ja jälg seotakse ühise tunnusega, nii et alarmist saab liikuda sama päringu logide ja jälje juurde. Uuemad lahendused koguvad andmeid otse Linuxi tuumast tehnoloogiaga eBPF, ilma rakenduse koodi muutmata.
+### Prometheus
+
+[Prometheus](https://prometheus.io/docs/introduction/overview/) on avatud lähtekoodiga mõõdikute süsteem. See tehti 2012. aastal SoundCloudis, sest olemasolevad tööriistad ei sobinud keskkonda, kus teenuseid tekib ja kaob pidevalt. Enne seda oli kogumine seadistatud masinate kaupa ja mõõdikul oli ainult nimi. Prometheus tõi kaks muutust: server küsib mõõdikud ise ja iga mõõdik kannab silte, mille järgi saab andmeid valida ja kokku võtta. 2016. aastal sai Prometheusest Kubernetese järel teine projekt sihtasutuses Cloud Native Computing Foundation. Praegu on see konteinerite ja Kubernetese mõõdikute tavaline valik. Prometheuse komplekti kuuluvad exporter'id, Alertmanager teavituste jaoks ja Grafana töölaudade jaoks. Suund on koostöö OpenTelemetryga: versioon 3 võtab vastu ka OpenTelemetry andmeid.
+
+### Grafana
+
+[Grafana](https://grafana.com/oss/) on töölaudade tööriist, mis tehti 2014. aastal. Enne oli igal süsteemil oma graafikute leht ja eri allikate andmeid ei saanud kõrvuti vaadata. Grafana näitab ühel töölaual andmeid mitmest allikast, näiteks Prometheusest, Zabbixist, Elasticsearchist ja andmebaasist. Praegu on Grafana Labsil terve komplekt lühendiga **LGTM**: Loki logidele, Grafana töölaudadele, Tempo jälgedele ja Mimir mõõdikute pikaajaliseks hoidmiseks, ning andmeid koguv Alloy. Suund on hoida kõik kolm andmeliiki ühes kohas ja liikuda töölaual mõõdikult sama aja logide ja jälgede juurde. K3-s kasutad Lokit ja Alloyd.
+
+### Elastic
+
+[Elastic Stack](https://www.elastic.co/elastic-stack) on tuntud ka nime ELK all: Elasticsearch, Logstash ja Kibana. Elasticsearch ilmus 2010. aastal ja on otsingumootor, mis hoiab andmeid nii, et neist saab kiiresti teksti otsida. Logstash töötleb ja suunab logisid ning Kibana on veebiliides otsinguks ja töölaudadeks, hiljem lisandusid koguvad agendid Beats ja Elastic Agent. Enne Elasticut otsiti logisid igas masinas eraldi käsuga `grep`. Elastic koondas logid ühte kohta ja tegi täistekstiotsingu kiireks, see on siiani selle tugevaim külg. 2021. aastal muutis Elastic litsentsi ja selle peale tegi Amazon avatud koopia [OpenSearch](https://opensearch.org/). Praegu kogub Elastic ka mõõdikuid ja jälgi ning toetab OpenTelemetryt.
+
+### OpenTelemetry ja Jaeger
+
+[OpenTelemetry](https://opentelemetry.io/docs/what-is-opentelemetry/) on avatud standard ja tööriistade komplekt, millega rakendus ja teenus annavad telemeetria välja. Enne seda oli mõõdikute, logide ja jälgede jaoks eri teegid ning iga tootja nõudis oma agenti ja vormingut. OpenTelemetry tekkis 2019. aastal kahe varasema projekti, OpenTracingu ja OpenCensuse, liitmisel ning on Cloud Native Computing Foundationi projekt. Rakendus annab andmed välja ühe protokolliga, mille nimi on OTLP, ja OpenTelemetry Collector suunab need Prometheusesse, Lokisse, Jaegerisse või kommertstootesse ilma rakenduse koodi muutmata. Praegu toetavad seda kõik eelnevad tööriistad.
+
+[Jaeger](https://www.jaegertracing.io/docs/latest/) on avatud lähtekoodiga süsteem jälgede hoidmiseks ja vaatamiseks. Selle tegi Uber, sest mitmesajast teenusest koosnevas süsteemis ei olnud muul moel näha, kus päring aega kulutab. Jaeger avaldati 2017. aastal ja on samuti Cloud Native Computing Foundationi projekt. Jaegeri uus versioon 2 on ehitatud OpenTelemetry Collectori peale, nii et rakendus saadab jäljed OpenTelemetryga ja Jaeger hoiab ning näitab neid. K4-s kasutad mõlemat.
+
+**Kuhu see läheb.** Suund on, et andmed antakse välja ühel standardsel moel, OpenTelemetryga, ja hoidmise ning vaatamise tööriista saab valida või vahetada. Mõõdik, logi ja jälg seotakse ühise tunnusega, nii et alarmist saab liikuda sama päringu logide ja jälje juurde. Uuemad lahendused koguvad andmeid otse Linuxi tuumast tehnoloogiaga eBPF, ilma rakenduse koodi muutmata.
 
 ??? note "Tabel 1.10. Tööriistad kursusel ja nende kõrval"
     | Andmeliik | Kursusel | Levinud teised | Kohtumine |
@@ -215,18 +236,18 @@ Täna alustad mõõdikutest. Prometheus küsib mõõdikuid jälgitavatelt masina
 
 <figure markdown="span">
   ![Prometheuse server küsib target'itelt mõõdikuid, salvestab need aegridade andmebaasi ja vastab PromQL-i päringutele; andmeid kasutavad veebiliides, Grafana ja Alertmanager](../images/k01_ylesehitus.svg)
-  <figcaption>Joonis 1.2. Prometheuse ülesehitus: kogumine, aegridade andmebaas ja PromQL ([Prometheuse ülevaade](https://prometheus.io/docs/introduction/overview/)) (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.3. Prometheuse ülesehitus: kogumine, aegridade andmebaas ja PromQL ([Prometheuse ülevaade](https://prometheus.io/docs/introduction/overview/)) (Talvik, 2026).</figcaption>
 </figure>
 
 ## 7. Kes avab ühenduse
 
-Mõõdikute kogumisel on kaks küsimust: kes avab ühenduse ja milline komponent tagastab väärtused. Prometheuse puhul avab ühenduse Prometheus ja exporter tagastab korraga kõik oma mõõdikud. Seda nimetatakse **pull-mudeliks**. Kui jälgitav masin saadab andmed ise keskserverisse, on see **push-mudel**: nii töötavad näiteks Zabbixi aktiivne agent, Telegraf ja OpenTelemetry (K4).
+Mõõdikute kogumisel on kaks küsimust: kes avab ühenduse ja milline komponent tagastab väärtused. Prometheuse puhul avab ühenduse Prometheus ja exporter tagastab korraga kõik oma mõõdikud. See on **pull-mudel**. Kui jälgitav masin saadab andmed ise keskserverisse, on see **push-mudel**: nii töötavad näiteks Zabbixi aktiivne agent, Telegraf ja OpenTelemetry, mida kasutad K4-s.
 
 Pull-mudelis peab jälgitavas masinas olema port lahti ja server peab teadma kõiki aadresse. Push-mudelis peab lahti olema serveri port ja jälgitav masin peab teadma serveri aadressi. Pull-mudeli eelis on see, et Prometheus märkab kohe, kui target ei vasta.
 
 <figure markdown="span">
   ![Prometheus vm3-s saadab vm2 ja vm1 node_exporterile päringu GET /metrics ja saab vastuseks mõõteväärtused](../images/k01_kes_kusib.svg)
-  <figcaption>Joonis 1.3. Prometheus küsib jälgitavate masinate node_exporteritelt mõõdikuid. Ühenduse avab Prometheus, exporter ainult vastab (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.4. Prometheus küsib jälgitavate masinate node_exporteritelt mõõdikuid. Ühenduse avab Prometheus, exporter ainult vastab (Talvik, 2026).</figcaption>
 </figure>
 
 ??? question "Kontrolli ennast"
@@ -255,7 +276,7 @@ node_cpu_seconds_total{cpu="0",mode="idle"} 81432.17
 
 <figure markdown="span">
   ![Mõõdikurida node_cpu_seconds_total cpu 0 mode idle väärtusega: mõõdiku nimi, sildid ja väärtus; sama nimi eri siltidega annab eri aegread](../images/k01_moodikurida.svg)
-  <figcaption>Joonis 1.4. Mõõdiku nimi ja sildid ehk label'id valivad päringu jaoks õige aegrea. Prometheus lisab kogumisel sildid `job` ja `instance` (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.5. Mõõdiku nimi ja sildid ehk label'id valivad päringu jaoks õige aegrea. Prometheus lisab kogumisel sildid `job` ja `instance` (Talvik, 2026).</figcaption>
 </figure>
 
 Mõõteväärtuse real on mõõdiku **nimi** (`node_filesystem_avail_bytes`) ja **väärtus** (`1.2034e+10`). Kui mõõdikul on **sildid** ehk label'id, on need nime järel loogelistes sulgudes (`mountpoint="/"`), mälumõõdikul neid pole. `e+10` tähendab korrutamist arvuga 10¹⁰. Read `# TYPE` ja `# HELP` kirjeldavad mõõdiku tüüpi ja tähendust. Ühik on nime lõpus: `_bytes` tähendab baite ja `_seconds_total` sekundeid kokku.
@@ -286,12 +307,12 @@ scrape_configs:
 
 <figure markdown="span">
   ![Neli kogumist 15 sekundi järel: kolm õnnestuvad ja annavad väärtuse ning up=1, üks ebaõnnestub, väärtus puudub ja up=0](../images/k01_scrape_ajas.svg)
-  <figcaption>Joonis 1.5. Iga kogumine lisab aegreale punkti ja salvestab mõõdiku up. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.6. Iga kogumine lisab aegreale punkti ja salvestab mõõdiku up. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
 </figure>
 
 <figure markdown="span">
   ![Kolm salvestatud punkti: mõõdiku nimi, sildid ja ajatempel moodustavad võtme, millele kuulub väärtus; kaks punkti on samast aegreast, kolmas teisest](../images/k01_aegrea_punkt.svg)
-  <figcaption>Joonis 1.6. Mida Prometheus salvestab: nimi, sildid ja ajatempel kokku on võti, millele kuulub mõõdetud väärtus (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.7. Mida Prometheus salvestab: nimi, sildid ja ajatempel kokku on võti, millele kuulub mõõdetud väärtus (Talvik, 2026).</figcaption>
 </figure>
 
 Mõõdiku nimi koos siltide väärtustega määrab ühe **aegrea**. Kui masin avaldab iga loogilise protsessori kohta kaheksa `mode` väärtust, tekib kahe loogilise protsessori korral `node_cpu_seconds_total` jaoks 16 aegrida. Kaks sellist masinat annavad 32 aegrida.
@@ -319,7 +340,7 @@ Kui päring ei leia midagi, võib viga olla viies kohas. Kontrolli neid järjest
 
 <figure markdown="span">
   ![Viis järjestikust kontrollpunkti: exporter töötab, /metrics vastab, võrk ja tulemüür, Prometheus kogus, päring leiab aegread; iga sammu juures küsimus](../images/k01_kontroll.svg)
-  <figcaption>Joonis 1.7. Kogumise kontroll: alusta sealt, kus esimene kontroll ebaõnnestub (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.8. Kogumise kontroll: alusta sealt, kus esimene kontroll ebaõnnestub (Talvik, 2026).</figcaption>
 </figure>
 
 ??? question "Kontrolli ennast"
@@ -343,12 +364,12 @@ Jagamine paneb kokku read, millel on samad sildid, seega saad iga masina kohta �
 
 <figure markdown="span">
   ![Ainult mõõdiku nimi annab kaks rida, sildifilter jätab ühe masina, jagamine annab iga masina kohta ühe protsendi](../images/k01_sildifilter.svg)
-  <figcaption>Joonis 1.8. Sildifilter valib aegread, jagamine paaritab read samade siltide järgi. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.9. Sildifilter valib aegread, jagamine paaritab read samade siltide järgi. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
 </figure>
 
 <figure markdown="span">
   ![MemAvailable ja MemTotal read paaritatakse silti instance järgi; rida, millel paarilist pole, jääb tulemusest välja](../images/k01_sobitamine.svg)
-  <figcaption>Joonis 1.9. Jagamine sobitab read samade siltide järgi (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.10. Jagamine sobitab read samade siltide järgi (Talvik, 2026).</figcaption>
 </figure>
 
 Sildifiltris saab kasutada nelja operaatorit ([Querying basics](https://prometheus.io/docs/prometheus/latest/querying/basics/#time-series-selectors)):
@@ -365,14 +386,14 @@ Sildifiltris saab kasutada nelja operaatorit ([Querying basics](https://promethe
 
 <figure markdown="span">
   ![Vasakul instant vector: igast aegreast üks viimane väärtus; paremal range vector: viimase minuti väärtused, mis lähevad funktsiooni rate sisse](../images/k01_vektorid.svg)
-  <figcaption>Joonis 1.10. Instant vector annab ühe väärtuse, range vector `[1m]` annab väärtused ajavahemikus (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.11. Instant vector annab ühe väärtuse, range vector `[1m]` annab väärtused ajavahemikus (Talvik, 2026).</figcaption>
 </figure>
 
 **Kuidas muutub protsessori kasutus koormuskatse ajal?** `node_cpu_seconds_total` on counter. Counteri toorväärtus ütleb ainult, kui palju aega on kokku kulunud, kiiruse saamiseks loetakse kaks väärtust ja jagatakse vahe ajaga. Funktsioon `rate()` arvutab ajavahemiku `[1m]` väärtuste põhjal counteri keskmise kasvu sekundis ja arvestab ka counteri lähtestumist ([rate()](https://prometheus.io/docs/prometheus/latest/querying/functions/#rate)). Kasuta seda counterite, mitte gauge'ide jaoks. Jõudeoleku (`mode="idle"`) kasv on iga protsessori kohta 0 ja 1 vahel. `avg by (instance)` arvutab iga masina loogiliste protsessorite keskmise ja `100 * (1 - ...)` teeb sellest kasutuse protsendi.
 
 <figure markdown="span">
   ![Ülal counteri toorväärtus, mis koormuse ajal peaaegu ei kasva; all rate, mis koormuse ajal langeb nulli lähedale](../images/k01_counter_rate.svg)
-  <figcaption>Joonis 1.11. Counteri toorväärtus ja selle kasv sekundis koormuskatse ajal. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.12. Counteri toorväärtus ja selle kasv sekundis koormuskatse ajal. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
 </figure>
 
 ```text
@@ -384,7 +405,7 @@ avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))
 
 <figure markdown="span">
   ![Neli sammu: node_cpu_seconds_total idle, siis rate, siis avg by instance, siis 100 korda 1 miinus tulemus; iga sammu kõrval tulemuse näide](../images/k01_paring.svg)
-  <figcaption>Joonis 1.12. Protsessori kasutuse päring tekib neljas sammus: loendur, kasv sekundis, keskmine masina kohta ja jõudeajast üle jäänud aja osakaal protsentides. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.13. Protsessori kasutuse päring tekib neljas sammus: loendur, kasv sekundis, keskmine masina kohta ja jõudeajast üle jäänud aja osakaal protsentides. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
 </figure>
 
 15-sekundilise kogumisintervalli juures kasutame üheminutilist akent. Mitut mõõtmist hõlmav aken teeb tulemuse stabiilsemaks, pikem aken silub lühikesi muutusi rohkem. Uus mõõtmine mõjutab tulemust kohe, aga täielikult jõuab muutus tulemusse alles akna jooksul.
@@ -393,7 +414,7 @@ Võrdlus, näiteks `< 20`, jätab alles ainult read, mille kohta tingimus kehtib
 
 <figure markdown="span">
   ![Kolm rida vaba ruumi protsendiga; tingimus alla 20 jätab alles ainult ühe masina juurfailisüsteemi rea](../images/k01_vordlus.svg)
-  <figcaption>Joonis 1.13. Võrdlus filtreerib read: alles jäävad ainult need, mille kohta tingimus kehtib (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.14. Võrdlus filtreerib read: alles jäävad ainult need, mille kohta tingimus kehtib (Talvik, 2026).</figcaption>
 </figure>
 
 ??? question "Kontrolli ennast"

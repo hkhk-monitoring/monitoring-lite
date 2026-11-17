@@ -507,7 +507,7 @@ grep -o '"health":"[a-z]*"' logid/k1-targets.json
 ```
 
 ??? success "Oodatav tulemus"
-    Kolm rida `"health":"up"`. Targets-lehel on mõlemad node_exporterid olekus `UP`, **Last scrape** on alla 15 sekundi tagasi ja **Error** on tühi. Kui mõni on `DOWN`, vaata **Error** veergu ja loengu tabelit 1.2.
+    Kolm rida `"health":"up"`. Targets-lehel on mõlemad node_exporterid olekus `UP`, **Last scrape** on alla 15 sekundi tagasi ja **Error** on tühi. Kui mõni on `DOWN`, vaata **Error** veergu ja loengu tabelit 1.12.
 
 ### 5.1 Kogumisvea katse
 

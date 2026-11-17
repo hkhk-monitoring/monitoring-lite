@@ -230,27 +230,40 @@ Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.googl
 
 ### Zabbix
 
+![Zabbixi logo](../images/logod/zabbix.svg){ width="72" align=right }
+
 [Zabbix](https://www.zabbix.com/documentation/current/en/manual/introduction/overview) on kõik-ühes monitooringusüsteem: jälgitavas masinas töötab agent, server kogub andmed, hoiab neid relatsioonilises andmebaasis ja näitab veebiliideses, triggerid annavad alarmi. Selle tegi Aleksei Vladišev ja esimene versioon ilmus 2001. aastal, ettevõte asub Riias. Enne olid Nagiose-taolised kontrollid, mis ütlesid ainult, kas teenus vastab. Zabbix hakkas väärtusi ajas hoidma ja graafikuid joonistama ning mallidega sai sama seadistuse anda sadadele masinatele. Praegu on Zabbix levinud ettevõtete serverite ja võrguseadmete jälgimisel, sest seadistus käib veebiliideses ja valmis malle on palju. Suund on avatus teiste tööriistadega: Zabbix oskab lugeda Prometheuse mõõdikuid ja selle andmeid saab näidata Grafanas.
 
 ### Prometheus
+
+![Prometheuse logo](../images/logod/prometheus.svg){ width="72" align=right }
 
 [Prometheus](https://prometheus.io/docs/introduction/overview/) on avatud lähtekoodiga mõõdikute süsteem. See tehti 2012. aastal SoundCloudis, sest olemasolevad tööriistad ei sobinud keskkonda, kus teenuseid tekib ja kaob pidevalt. Enne seda oli kogumine seadistatud masinate kaupa ja mõõdikul oli ainult nimi. Prometheus tõi kaks muutust: server küsib mõõdikud ise ja iga mõõdik kannab silte, mille järgi saab andmeid valida ja kokku võtta. 2016. aastal sai Prometheusest Kubernetese järel teine projekt sihtasutuses Cloud Native Computing Foundation. Praegu on see konteinerite ja Kubernetese mõõdikute tavaline valik. Prometheuse komplekti kuuluvad exporter'id, Alertmanager teavituste jaoks ja Grafana töölaudade jaoks. Suund on koostöö OpenTelemetryga: versioon 3 võtab vastu ka OpenTelemetry andmeid.
 
 ### Grafana
 
+![Grafana logo](../images/logod/grafana.svg){ width="72" align=right }
+
 [Grafana](https://grafana.com/oss/) on töölaudade tööriist, mis tehti 2014. aastal. Enne oli igal süsteemil oma graafikute leht ja eri allikate andmeid ei saanud kõrvuti vaadata. Grafana näitab ühel töölaual andmeid mitmest allikast, näiteks Prometheusest, Zabbixist, Elasticsearchist ja andmebaasist. Praegu on Grafana Labsil terve komplekt lühendiga **LGTM**: Loki logidele, Grafana töölaudadele, Tempo jälgedele ja Mimir mõõdikute pikaajaliseks hoidmiseks, ning andmeid koguv Alloy. Suund on hoida kõik kolm andmeliiki ühes kohas ja liikuda töölaual mõõdikult sama aja logide ja jälgede juurde. Kursusel kasutad Grafanat töölaudade ja alarmide jaoks, Loki ja Tempo on Elasticu ja Jaegeri kõrval teine valik.
 
 ### Elastic
+
+![Elasticsearchi logo](../images/logod/elastic.svg){ width="150" align=right }
 
 [Elastic Stack](https://www.elastic.co/elastic-stack) on tuntud ka nime ELK all: Elasticsearch, Logstash ja Kibana. Elasticsearch ilmus 2010. aastal ja on otsingumootor, mis hoiab andmeid nii, et neist saab kiiresti teksti otsida. Logstash töötleb ja suunab logisid ning Kibana on veebiliides otsinguks ja töölaudadeks, hiljem lisandusid koguvad agendid Beats ja Elastic Agent. Enne Elasticut otsiti logisid igas masinas eraldi käsuga `grep`. Elastic koondas logid ühte kohta ja tegi täistekstiotsingu kiireks, see on siiani selle tugevaim külg. 2021. aastal muutis Elastic litsentsi ja selle peale tegi Amazon avatud koopia [OpenSearch](https://opensearch.org/). Praegu kogub Elastic ka mõõdikuid ja jälgi ning toetab OpenTelemetryt. K3-s kogud Elasticuga kõigi kolme masina logid ühte kohta.
 
 ### OpenTelemetry ja Jaeger
 
+![OpenTelemetry logo](../images/logod/opentelemetry.svg){ width="72" align=right }
+
 [OpenTelemetry](https://opentelemetry.io/docs/what-is-opentelemetry/) on avatud standard ja tööriistade komplekt, millega rakendus ja teenus annavad telemeetria välja. Enne seda oli mõõdikute, logide ja jälgede jaoks eri teegid ning iga tootja nõudis oma agenti ja vormingut. OpenTelemetry tekkis 2019. aastal kahe varasema projekti, OpenTracingu ja OpenCensuse, liitmisel ning on Cloud Native Computing Foundationi projekt. Rakendus annab andmed välja ühe protokolliga, mille nimi on OTLP, ja OpenTelemetry Collector suunab need Prometheusesse, Lokisse, Jaegerisse või kommertstootesse ilma rakenduse koodi muutmata. Praegu toetavad seda kõik eelnevad tööriistad.
 
+![Jaegeri logo](../images/logod/jaeger.svg){ width="72" align=right }
 [Jaeger](https://www.jaegertracing.io/docs/latest/) on avatud lähtekoodiga süsteem jälgede hoidmiseks ja vaatamiseks. Selle tegi Uber, sest mitmesajast teenusest koosnevas süsteemis ei olnud muul moel näha, kus päring aega kulutab. Jaeger avaldati 2017. aastal ja on samuti Cloud Native Computing Foundationi projekt. Jaegeri uus versioon 2 on ehitatud OpenTelemetry Collectori peale, nii et rakendus saadab jäljed OpenTelemetryga ja Jaeger hoiab ning näitab neid. K4-s kasutad mõlemat.
 
 **Kuhu see läheb.** Suund on, et andmed antakse välja ühel standardsel moel, OpenTelemetryga, ja hoidmise ning vaatamise tööriista saab valida või vahetada. Mõõdik, logi ja jälg seotakse ühise tunnusega, nii et alarmist saab liikuda sama päringu logide ja jälje juurde. Uuemad lahendused koguvad andmeid otse Linuxi tuumast tehnoloogiaga eBPF, ilma rakenduse koodi muutmata.
+
+Logod on tööriistade omanike kaubamärgid: Prometheuse, OpenTelemetry ja Jaegeri logod on Cloud Native Computing Foundationi [artwork](https://github.com/cncf/artwork) hoidlast, Grafana logo Grafana hoidlast, Zabbixi ja Elasticsearchi logod Wikimedia Commonsist.
 
 ??? note "Tabel 1.9. Tööriistad kursusel ja nende kõrval"
     | Andmeliik | Kursusel | Levinud teised | Kohtumine |

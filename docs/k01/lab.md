@@ -731,5 +731,11 @@ Tulemuse näed Classroom 50-s.
 ??? example "3 · Mitu aegrida"
     Päring `count({__name__=~"node_.*"})` loeb kõik node_exporteri aegread. Leia päringuga `topk(5, count by (__name__) ({__name__=~"node_.*"}))`, millistel mõõdikutel on kõige rohkem aegridu ja miks.
 
-??? example "4 · Seaded Ansible'iga"
+??? example "4 · Konteinerite mõõdikud cAdvisoriga"
+    node_exporter näitab kogu masina mälu, aga mitte seda, palju võtab iga konteiner. Seda näitab [cAdvisor](https://github.com/google/cadvisor). Lisa vm3 Compose'i projekti teenus image'iga `gcr.io/cadvisor/cadvisor:v0.55.1`, ühenda konteinerisse lugemiseks kaustad `/`, `/var/run`, `/sys` ja `/var/lib/docker` nagu cAdvisori README näites ning lisa `prometheus.yml`-i uus `job_name` aadressiga `cadvisor:8080`. Kirjuta päring, mis näitab vm3 iga konteineri mälukasutust, ja leia, milline DevOps Lite'i konteiner võtab kõige rohkem mälu.
+
+??? example "5 · Rakenduse mõõdikud nginx exporteriga"
+    Seni jälgisid masinaid. Rakenduse mõõdikud, näiteks päringuid sekundis ja avatud ühendusi, annab nginx'i jaoks [nginx exporter](https://github.com/nginx/nginx-prometheus-exporter). nginx peab avaldama oleku lehe `stub_status`, mida exporter loeb. Lisa DevOps Lite'i pinu nginx'i seadetesse `location /stub_status { stub_status; }`, käivita image `nginx/nginx-prometheus-exporter:1.5.3` argumendiga `--nginx.scrape-uri=http://<nginx>/stub_status` ja lisa see Prometheusesse. Ava lehte mitu korda ja kirjuta päring, mis näitab päringuid sekundis.
+
+??? example "6 · Seaded Ansible'iga"
     Kirjuta playbook `konf/monitooring.yml`, mis kopeerib vm3-sse `compose.yaml`, `prometheus.yml` ja andmeallika faili ning käivitab projekti mooduliga [`community.docker.docker_compose_v2`](https://docs.ansible.com/ansible/latest/collections/community/docker/docker_compose_v2_module.html). Teine käivitus peab andma `changed=0`.

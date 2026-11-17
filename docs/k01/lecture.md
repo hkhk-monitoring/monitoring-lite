@@ -232,6 +232,15 @@ Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.googl
     | töölaud | Grafana | Kibana, OpenSearch Dashboards | K1–K5 |
     | kõik ühes | eelmiste kohtumiste tööriistad koos | Uptrace, SigNoz, Elastic Observability, Grafana LGTM | K5 |
 
+Kõik ei vaja täit komplekti. Kodulaboris või ühe inimese hallatavates masinates kasutatakse ka kergemaid tööriistu, millel on valmis töölaud ja mida ei pea seadistama. Nende hind on see, et päringukeelt ja standardset andmevormingut ei ole ning küsida saab ainult seda, mis on ette tehtud.
+
+??? note "Tabel 1.11. Kerged tööriistad"
+    | Tööriist | Mis see on | Sobib, kui | Puudub |
+    |---|---|---|---|
+    | [Beszel](https://github.com/henrygd/beszel) | väike keskserver ja agent igas masinas, valmis töölaud ja lihtsad alarmid | kodulabor, mõni masin, üks kasutaja | päringukeel, logid, jäljed |
+    | [Netdata](https://github.com/netdata/netdata) | agent igas masinas, kogub tuhandeid mõõdikuid iga sekund ja näitab need kohe | on vaja kiiresti näha ühe masina kõiki näite | agent võtab igas masinas 100–200 MB mälu, veebiliides on suletud lähtekoodiga |
+    | [Uptime Kuma](https://github.com/louislam/uptime-kuma) | kontrollib regulaarselt, kas veebileht või port vastab, ja saadab teate | on vaja ainult teada, kas teenus on kättesaadav | masinate mõõdikud |
+
 Täna alustad mõõdikutest. Prometheus küsib mõõdikuid jälgitavatelt masinatelt, salvestab need aegridadena ja vastab päringutele.
 
 <figure markdown="span">
@@ -327,7 +336,7 @@ Mõõdiku nimi koos siltide väärtustega määrab ühe **aegrea**. Kui masin av
 
 Kui päring ei leia midagi, võib viga olla viies kohas. Kontrolli neid järjest, sest iga samm eeldab eelmist.
 
-??? note "Tabel 1.11. Kogumise kontroll sammhaaval"
+??? note "Tabel 1.12. Kogumise kontroll sammhaaval"
     | Samm | Kus | Kuidas kontrollid | Mida tulemus tõendab |
     |---|---|---|---|
     | 1. Exporter töötab | jälgitav masin | `systemctl is-active node_exporter` | systemd peab teenust aktiivseks |
@@ -374,7 +383,7 @@ Jagamine paneb kokku read, millel on samad sildid, seega saad iga masina kohta �
 
 Sildifiltris saab kasutada nelja operaatorit ([Querying basics](https://prometheus.io/docs/prometheus/latest/querying/basics/#time-series-selectors)):
 
-??? note "Tabel 1.12. Sildifiltri operaatorid"
+??? note "Tabel 1.13. Sildifiltri operaatorid"
     | Operaator | Tähendus | Näide |
     |---|---|---|
     | `=` | võrdne | `node_filesystem_avail_bytes{mountpoint="/"}` |

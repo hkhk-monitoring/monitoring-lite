@@ -8,7 +8,7 @@ tags:
 
 # Loeng: mõõdikud ja töölaud
 
-DevOps Lite'is paigaldasid Ansible'i ja Compose'iga teenused kolme masinasse. Kuidas tead, kas need töötavad ja kas masinatel jätkub ressursse? Loeng algab sellest, mida Linux ühes masinas ise näitab, ja jõuab selleni, miks andmed kogutakse keskselt. Seejärel paned masinad jälgimise alla: node_exporter avaldab iga masina mõõdikud, Prometheus küsib need ise ja salvestab, päringud koostad PromQL-iga ja Grafana näitab tulemust töölaual. Kogu kohtumise läbiv küsimus on: **millises masinas on ressursse kõige vähem alles?**
+DevOps Lite'is paigaldasid Ansible'i ja Compose'iga teenused kolme masinasse. Kuidas tead, kas need töötavad ja kas masinatel jätkub ressursse? Täna paned masinad jälgimise alla: node_exporter avaldab iga masina mõõdikud, Prometheus küsib need ise ja salvestab, päringud koostad PromQL-iga ja Grafana näitab tulemust töölaual. Kogu kohtumise läbiv küsimus on: **millises masinas on ressursse kõige vähem alles?**
 
 ??? abstract "Õpiväljundid"
     Pärast loengut ja praktikumi oskad:
@@ -23,100 +23,28 @@ DevOps Lite'is paigaldasid Ansible'i ja Compose'iga teenused kolme masinasse. Ku
     - koostada PromQL-i päringuid saadaval oleva mälu, failisüsteemi vaba ruumi ja protsessori kasutuse uurimiseks;
     - luua Grafanasse Prometheuse andmeallika ja lisada paneeli oma PromQL-i päringuga.
 
-## 1. Üks masin: mida Linux ise näitab
+## 1. Miks süsteeme jälgitakse
 
-Ketas täitub öösel ja teenus lakkab töötamast. Kuidas oleksid seda enne märganud ja kust näeksid hommikul, mis juhtus? Vastus algab sellest, mida masin ise näitab.
-
-Iga Linuxi masin kirjutab sündmused logisse ja näitab käskudega, kui palju ressursse on kasutusel. AlmaLinuxis kogub logid teenus **journald** ja neid loeb käsk `journalctl`. Logikirjel on aeg, masin, programm ja tekst.
-
-```bash
-journalctl -p err -b            # selle käivituse vead
-journalctl -u sshd --since "1 hour ago"
-```
-
-```text
-nov 20 09:14:02 vm2 sshd[1532]: Failed password for kasutaja from 192.168.125.40 port 52144 ssh2
-nov 20 09:15:40 vm2 kernel: Out of memory: Killed process 2211 (java)
-```
-
-Ressursside hetkeseisu näitavad `free`, `df` ja `top`. Iga rida on üks arv ühel hetkel: kui palju mälu on saadaval, kui palju kettaruumi on vaba ja kui hõivatud on protsessor.
-
-```bash
-free -h       # mälu: total, used, available
-df -h /       # juurfailisüsteemi vaba ruum
-uptime        # koormus viimase 1, 5 ja 15 minuti keskmisena
-```
-
-Ühe masina juures sellest piisab. Kolme või viiekümne masinaga tekivad kolm probleemi. Käsud näitavad ainult praegust hetke ja öösel olnud riket enam ei näe. Igasse masinasse tuleb eraldi sisse logida. Keegi ei anna teada, kui ketas hakkab täis saama. Monitooring lahendab need: andmed kogutakse kõigist masinatest ühte kohta, hoitakse ajas alles ja reeglid teatavad, kui midagi läheb valesti.
-
-??? question "Kontrolli ennast"
-    1. Millise käsuga näed ainult teenuse `nginx` logikirjeid viimasest tunnist?
-    2. Miks ei piisa `free -h` väljundist, kui rike oli eile öösel?
-
-    ??? success "Vastused"
-        1. `journalctl -u nginx --since "1 hour ago"`.
-        2. `free` näitab ainult praegust hetke. Eilse olukorra nägemiseks peab mälu väärtust regulaarselt koguma ja salvestama.
-
-## 2. Andmed: mida süsteem endast annab
-
-Monitooring ja jälgitavus põhinevad samadel andmetel. Andmed, mida süsteem enda kohta välja annab, on **telemeetria** (telemetry). Telemeetriat tekitavad operatsioonisüsteem, teenused nagu nginx ja andmebaas, rakenduse kood, võrguseadmed ja kasutaja brauser. Hajusas süsteemis on selliseid allikaid kümneid kuni tuhandeid.
-
-Telemeetriat on nelja liiki ja nende ingliskeelsete nimede algustähtedest tuleb lühend **MELT**: metrics, events, logs, traces.
-
-??? note "Tabel 1.1. Telemeetria liigid ehk MELT"
-    | Liik | Koosneb | Näide | Kohtumine |
-    |---|---|---|---|
-    | **mõõdik** (metric) | nimi, ajatempel, arvväärtus | saadaval mälu baitides iga 15 sekundi järel; võrgukommutaatori pordi koormus, mida küsitakse SNMP-ga kord minutis | K1, K2 |
-    | **sündmus** (event) | sündmuse nimi, ajatempel, sündmuse andmed | kommutaatori port läks maha; kasutaja vahetas parooli | K2, K3 |
-    | **logi** (log) | ajatempel ja kirjeldav tekst | `/var/log/messages` või `journalctl` rida `Failed password for kasutaja from 192.168.125.40` | K3 |
-    | **jälg** (trace) | ühe tegevusega seotud sündmuste ahel, iga sammu kestus | sisselogimine veebirakendusse: veebiserver 20 ms, rakendus 40 ms, andmebaas 4,5 s | K4 |
-
-**Mõõdik** on kokkuvõtlik arv kindla ajavahemiku kohta. Traditsiooniline võrgu ja serverite monitooring protokollidega SNMP, IPMI või WMI kogub peamiselt mõõdikuid. **Sündmus** on üks juhtum kindlal hetkel ja kannab endaga kaasas juhtumi andmeid: milline seade, mis toiming, milline kasutaja. **Logi** on sarnane sündmusega, aga on vabam tekst, mida kirjutavad rakendused, teenused ja võrguseadmed. Logi võib olla struktureeritud, näiteks syslog standardi RFC 5424 järgi, või vaba tekst, mida on palju raskem kokku võtta. **Jälg** erineb teistest selle poolest, et see ei kuulu ühele masinale: üks tegevus, näiteks kasutaja sisselogimine, läbib mitu teenust ja masinat ning jälg seob nende sammud kokku. Et eri teenused jälje tunnuse ühtmoodi edasi annaksid, on W3C 2020. aastal kinnitanud standardi [Trace Context](https://www.w3.org/TR/trace-context/), mida kasutab ka OpenTelemetry.
-
-??? note "Tabel 1.2. Liikide tugevused ja piirangud"
-    | Liik | Tugevus | Piirang |
-    |---|---|---|
-    | mõõdik | odav hoida ja töödelda, sobib aegridadeks ja üldpildiks | mida ette ei mõõdetud, seda hiljem ei näe |
-    | sündmus | näitab täpselt, mis toiming juhtus, sobib ootamatuteks päringuteks | vajab rohkem salvestusruumi ja võrku kui mõõdik |
-    | logi | kõige detailsem, parim konkreetse vea otsimiseks | suurt hulka on raske hoida ja läbi otsida, vaba tekst on raske kokku võtta |
-    | jälg | näitab tegevust otsast lõpuni üle mitme teenuse | rakenduse koodi tuleb lisada telemeetria väljaandmine ehk **instrumenteerimine**, et jälje tunnus liiguks teenuselt teenusele |
-
-Mõõdik on sama arv ikka ja jälle mõõdetuna. Osa 1 käsk `free` annab ühe punkti, monitooring kogub neid iga 15 sekundi järel ja tekib **aegrida**:
-
-```text
-saadaval_mälu{masin="vm2"}  1.47 GB  kell 09:14:00
-saadaval_mälu{masin="vm2"}  1.45 GB  kell 09:14:15
-saadaval_mälu{masin="vm2"}  0.12 GB  kell 09:14:30
-```
-
-Andmed läbivad alati samad sammud, ükskõik milline tööriist on kasutusel. Joonis 1.1 näitab, kuidas K1 tööriistad sammudele vastavad.
+Kasutaja ütleb: „Leht on aeglane.“ Leht läbib veebiserveri, rakenduse ja andmebaasi, ja põhjus võib olla igas neist või nende vahel. Kas teenus töötab? Kas masinal jätkub mälu ja kettaruumi? Millal aeglus algas ja mis enne seda muutus? Ilma andmeteta jääb üle ainult arvata.
 
 <figure markdown="span">
-  ![Andmete teekond kuues sammus: tekib Linuxi tuumas, avaldatakse node_exporteris aadressil /metrics, kogutakse Prometheusega iga 15 sekundi järel, salvestatakse Prometheuse andmebaasi, päritakse PromQL-iga ja näidatakse Grafanas](../images/k01_teekond.svg)
-  <figcaption>Joonis 1.1. Andmete teekond ja K1 tööriistad (Talvik, 2026).</figcaption>
+  ![Kasutaja, veebiserver, rakendus ja andmebaas järjest, kolme serveri all küsimärk; küsimused: kas teenus töötab, kas masinal jätkub ressursse, millal aeglus algas, mis enne seda muutus](../images/k01_kus_pohjus.svg)
+  <figcaption>Joonis 1.1. Kus on põhjus, kui leht on aeglane? (Talvik, 2026).</figcaption>
 </figure>
-
-Mõõdikud on kõige odavamad koguda ja hoida, sest üks väärtus on üks arv. Logid ja jäljed on mahukamad ja neid on vaja siis, kui mõõdik näitab probleemi ja tuleb teada, mis selle põhjustas.
 
 Rikke juures loetakse kahte aega. **Avastamise aeg** on rikke algusest selle märkamiseni, **parandamise aeg** on märkamisest taastumiseni. Ilma monitooringuta on avastamise aeg see, kuni kasutaja helistab. Monitooring lühendab mõlemat: alarm teatab enne kasutajat ja kogutud andmed näitavad, kust põhjust otsida.
 
-??? question "Kontrolli ennast"
-    1. Mis liiki telemeetria on rida „kommutaatori port 3 läks maha kell 14.05“?
-    2. Miks on mõõdikut odavam hoida kui logi?
-    3. Kumb samm andmete teekonnas puudub, kui node_exporter töötab, aga Prometheuse seadetes seda masinat ei ole?
+Sama küsimus tekib väiksemas mastaabis: ketas täitub öösel ja teenus lakkab töötamast. Kuidas oleksid seda enne märganud ja kust näeksid hommikul, mis juhtus?
 
-    ??? success "Vastused"
-        1. Sündmus: üks juhtum kindlal hetkel koos andmetega, milline seade ja mis juhtus.
-        2. Üks mõõdiku väärtus on üks arv koos ajatempliga, logirida on vaba tekst, mida on palju ja mida tuleb otsingu jaoks indekseerida.
-        3. Kogumine. Andmed on avaldatud, aga keegi ei küsi neid.
+## 2. Seire ja jälgitavus
 
-## 3. Seire ja jälgitavus
+Andmed, mida süsteem enda kohta välja annab, on **telemeetria**: mõõdikud, sündmused, logid ja jäljed. Nende liike vaatad lähemalt osas 3.
 
 Eesti keeles kasutatakse sama asja kohta kahte sõna, seire ja monitooring, need tähendavad sama. **Seire** (monitoring) on andmete kogumine ja nende põhjal aruande tegemine mõõdikute kohta, mis näitavad süsteemi tervist. Töölaual on protsessori kasutus, sest seda tahetakse näha, ja alarm teatab, kui ketas on 90% täis. Seire eeldab, et võimalikud rikked on ette teada.
 
 **Jälgitavus** (observability) on võime öelda süsteemi tegelik olek nende andmete põhjal, mida süsteem ise tekitab. Selleks kogutakse keskkonnast nii palju telemeetriat, et saaks uurida ka riket, mida keegi ei oodanud. Inglise keeles on nende nimi *unknown unknowns*. AWS-i võrdlus [Monitoring vs observability](https://aws.amazon.com/compare/the-difference-between-monitoring-and-observability/) ütleb vahe lühidalt: seire vastab küsimustele millal ja mis läks valesti, jälgitavus küsimustele miks ja kuidas.
 
-??? note "Tabel 1.3. Seire ja jälgitavus"
+??? note "Tabel 1.1. Seire ja jälgitavus"
     | | Seire | Jälgitavus |
     |---|---|---|
     | küsimus | millal ja mis? | miks ja kuidas? |
@@ -127,7 +55,7 @@ Eesti keeles kasutatakse sama asja kohta kahte sõna, seire ja monitooring, need
 
 Mõiste jälgitavus tuleb juhtimisteooriast. Rudolf Kálmán kirjeldas 1960. aastal, et süsteem on jälgitav, kui selle sisemist olekut saab välja arvutada sellest, mida süsteem väljastab. IT-s tähendab see sama: serverisse sisse logimata saab telemeetria põhjal öelda, milline on serveri olek. Seire ja jälgitavus kasutavad sama telemeetriat. Näiteks pärast uut versiooni on leht aeglane. Seire näitab, et lehe laadimisaeg on kasvanud ja alarm käivitub. Jälgitavus aitab leida, milline muudatus selle põhjustas.
 
-??? note "Tabel 1.4. Aeglane leht: mida iga andmeliik näitab"
+??? note "Tabel 1.2. Aeglane leht: mida iga andmeliik näitab"
     | Andmeliik | Mida näitab |
     |---|---|
     | mõõdik | andmebaasi masina protsessori kasutus on 100%, vastuse aeg on kasvanud |
@@ -136,7 +64,7 @@ Mõiste jälgitavus tuleb juhtimisteooriast. Rudolf Kálmán kirjeldas 1960. aas
 
 Jälgitavus on muutunud tähtsaks, sest süsteemid on hajusad. Üks rakendus koosneb mitmest teenusest, mis töötavad konteinerites eri masinates, ja konteinereid luuakse ning kustutatakse pidevalt. Rike ühes teenuses paistab sageli välja hoopis teises. Kolme andmeliigi kõrval on seetõttu vaja ka **konteksti**: millises masinas ja konteineris teenus töötab, millistest teenustest see sõltub ja milline versioon on paigaldatud. Kasutaja vaatest annavad lisateavet **sünteetilised kontrollid**, mis avavad lehte regulaarselt nagu kasutaja, ja tegelike kasutajate mõõdetud laadimisajad. Dynatrace'i artikkel [What is observability?](https://www.dynatrace.com/news/blog/what-is-observability-2/) kirjeldab neid lisaandmeid lähemalt.
 
-??? note "Tabel 1.5. Mis jälgitavust takistab"
+??? note "Tabel 1.3. Mis jälgitavust takistab"
     | Takistus | Mida see tähendab |
     |---|---|
     | andmed on eraldi tööriistades | mõõdikud ühes, logid teises, jäljed kolmandas süsteemis ja neid ei saa omavahel siduda |
@@ -146,9 +74,9 @@ Jälgitavus on muutunud tähtsaks, sest süsteemid on hajusad. Üks rakendus koo
 
 **Kuidas jälgitavus teoks tehakse.** Jälgitavus tekib hästi tehtud seirest: telemeetria kogutakse kokku, näidatakse arusaadavalt ja andmeid tõlgendatakse koos. Ainult küsitlemisest ja lävenditest ei piisa. Eraldi mõõdikud, sündmused, logid ja jäljed tuleb omavahel siduda, näiteks aja, masina või päringu tunnuse järgi, et leida rikke põhjus.
 
-**Telemeetria ja jälgitavus ei ole sama.** Telemeetria on andmed: mõõdikud, sündmused, logid ja jäljed. Jälgitavus on see, mida nende andmetega teed, et süsteemist aru saada.
+**Telemeetria ja jälgitavus ei ole sama.** Telemeetria on andmed, jälgitavus on see, mida nende andmetega teed, et süsteemist aru saada.
 
-??? note "Tabel 1.6. Mis probleeme jälgitavus lahendab"
+??? note "Tabel 1.4. Mis probleeme jälgitavus lahendab"
     | Probleem | Näide |
     |---|---|
     | aeg-ajalt tekkiv viga | tellimus ebaõnnestub kord päevas ja keegi ei oska seda korrata |
@@ -174,7 +102,7 @@ Töökohas on vaja mõlemat. Seire annab teada tuntud riketest, jälgitavus aita
 
     Erinevus on selles, kuidas rike paistab. Kui rakendus seisab, märkavad kasutajad seda kohe. Kui andmed on vigased, töötab kõik edasi, töölaud näitab valesid numbreid ja neid võidakse kasutada kaua, enne kui keegi märkab.
 
-    ??? note "Tabel 1.7. Andmete jälgitavuse viis tunnust"
+    ??? note "Tabel 1.5. Andmete jälgitavuse viis tunnust"
         | Tunnus | Küsimus | Näide rikkest |
         |---|---|---|
         | värskus (freshness) | millal andmed viimati uuenesid? | öine laadimine jäi seisma, aruanne näitab eilseid numbreid |
@@ -191,11 +119,124 @@ Töökohas on vaja mõlemat. Seire annab teada tuntud riketest, jälgitavus aita
         ??? success "Vastus"
             Värskust. Andmed ei ole uuenenud, kuigi süsteem töötab.
 
-## 4. Mida jälgida
+## 3. Telemeetria: mida süsteem endast annab
+
+Monitooring ja jälgitavus põhinevad samadel andmetel. Telemeetria (telemetry) tekib paljudes kohtades: seda annavad välja operatsioonisüsteem, teenused nagu nginx ja andmebaas, rakenduse kood, võrguseadmed ja kasutaja brauser. Hajusas süsteemis on selliseid allikaid kümneid kuni tuhandeid.
+
+Telemeetriat on nelja liiki ja nende ingliskeelsete nimede algustähtedest tuleb lühend **MELT**: metrics, events, logs, traces. Joonisel on sama juhtum, aeglane leht, kõigis neljas liigis.
+
+??? note "Tabel 1.6. Telemeetria liigid ehk MELT"
+    | Liik | Koosneb | Näide | Kohtumine |
+    |---|---|---|---|
+    | **mõõdik** (metric) | nimi, ajatempel, arvväärtus | saadaval mälu baitides iga 15 sekundi järel; võrgukommutaatori pordi koormus, mida küsitakse SNMP-ga kord minutis | K1, K2 |
+    | **sündmus** (event) | sündmuse nimi, ajatempel, sündmuse andmed | kommutaatori port läks maha; kasutaja vahetas parooli | K2, K3 |
+    | **logi** (log) | ajatempel ja kirjeldav tekst | `/var/log/messages` või `journalctl` rida `Failed password for kasutaja from 192.168.125.40` | K3 |
+    | **jälg** (trace) | ühe tegevusega seotud sündmuste ahel, iga sammu kestus | sisselogimine veebirakendusse: veebiserver 20 ms, rakendus 40 ms, andmebaas 4,5 s | K4 |
+
+**Mõõdik** on kokkuvõtlik arv kindla ajavahemiku kohta. Traditsiooniline võrgu ja serverite monitooring protokollidega SNMP, IPMI või WMI kogub peamiselt mõõdikuid. **Sündmus** on üks juhtum kindlal hetkel ja kannab endaga kaasas juhtumi andmeid: milline seade, mis toiming, milline kasutaja. **Logi** on sarnane sündmusega, aga on vabam tekst, mida kirjutavad rakendused, teenused ja võrguseadmed. Logi võib olla struktureeritud, näiteks syslog standardi RFC 5424 järgi, või vaba tekst, mida on palju raskem kokku võtta. **Jälg** erineb teistest selle poolest, et see ei kuulu ühele masinale: üks tegevus, näiteks kasutaja sisselogimine, läbib mitu teenust ja masinat ning jälg seob nende sammud kokku. Et eri teenused jälje tunnuse ühtmoodi edasi annaksid, on W3C 2020. aastal kinnitanud standardi [Trace Context](https://www.w3.org/TR/trace-context/), mida kasutab ka OpenTelemetry.
+
+??? note "Tabel 1.7. Liikide tugevused ja piirangud"
+    | Liik | Tugevus | Piirang |
+    |---|---|---|
+    | mõõdik | odav hoida ja töödelda, sobib aegridadeks ja üldpildiks | mida ette ei mõõdetud, seda hiljem ei näe |
+    | sündmus | näitab täpselt, mis toiming juhtus, sobib ootamatuteks päringuteks | vajab rohkem salvestusruumi ja võrku kui mõõdik |
+    | logi | kõige detailsem, parim konkreetse vea otsimiseks | suurt hulka on raske hoida ja läbi otsida, vaba tekst on raske kokku võtta |
+    | jälg | näitab tegevust otsast lõpuni üle mitme teenuse | rakenduse koodi tuleb lisada telemeetria väljaandmine ehk **instrumenteerimine**, et jälje tunnus liiguks teenuselt teenusele |
+
+<figure markdown="span">
+  ![Neli paneeli samast juhtumist kell 14.00–14.10: mõõdik vastuse aeg tõuseb kell 14.05, sündmus kell 14.05 paigaldati versioon 2.4, logirida 14:06 slow query 4.2 s, jälg kus andmebaasi samm võtab 4,5 sekundit](../images/k01_melt.svg)
+  <figcaption>Joonis 1.2. Sama juhtum mõõdiku, sündmuse, logi ja jäljena (Talvik, 2026).</figcaption>
+</figure>
+
+Mõõdikud on kõige odavamad koguda ja hoida, sest üks väärtus on üks arv. Logid ja jäljed on mahukamad ja neid on vaja siis, kui mõõdik näitab probleemi ja tuleb teada, mis selle põhjustas.
+
+??? question "Kontrolli ennast"
+    1. Mis liiki telemeetria on rida „kommutaatori port 3 läks maha kell 14.05“?
+    2. Miks on mõõdikut odavam hoida kui logi?
+    
+    ??? success "Vastused"
+        1. Sündmus: üks juhtum kindlal hetkel koos andmetega, milline seade ja mis juhtus.
+        2. Üks mõõdiku väärtus on üks arv koos ajatempliga, logirida on vaba tekst, mida on palju ja mida tuleb otsingu jaoks indekseerida.
+
+## 4. Mida Linux ise näitab
+
+Enne keskset monitooringut vaata, mida üks Linuxi masin juba ise näitab. Iga käsk vastab ühele küsimusele ja igal käsul on piir.
+
+??? note "Tabel 1.8. Linuxi käsud ja nende piirid"
+    | Küsimus | Käsk | Mida vaadata | Mida ei näe |
+    |---|---|---|---|
+    | Mis teenusega juhtus? | `journalctl -u nginx` | aeg, teenus, teate tekst | teiste masinate logisid |
+    | Kui palju mälu on saadaval? | `free -h` | veerg `available` | eilset väärtust |
+    | Kui palju kettaruumi on? | `df -h /` | veerud `Avail` ja `Use%` | kui kiiresti ruum väheneb |
+    | Kui koormatud on masin? | `uptime`, `top` | koormuse keskmised, protsessid | mis oli tund aega tagasi |
+
+Iga Linuxi masin kirjutab sündmused logisse ja näitab käskudega, kui palju ressursse on kasutusel. AlmaLinuxis kogub logid teenus **journald** ja neid loeb käsk `journalctl`. Logikirjel on aeg, masin, programm ja tekst.
+
+```bash
+journalctl -p err -b            # selle käivituse vead
+journalctl -u sshd --since "1 hour ago"
+```
+
+```text
+nov 20 09:14:02 vm2 sshd[1532]: Failed password for kasutaja from 192.168.125.40 port 52144 ssh2
+nov 20 09:15:40 vm2 kernel: Out of memory: Killed process 2211 (java)
+```
+
+Ressursside hetkeseisu näitavad `free`, `df` ja `top`. Iga rida on üks arv ühel hetkel: kui palju mälu on saadaval, kui palju kettaruumi on vaba ja kui hõivatud on protsessor.
+
+```bash
+free -h       # mälu: total, used, available
+df -h /       # juurfailisüsteemi vaba ruum
+uptime        # koormus viimase 1, 5 ja 15 minuti keskmisena
+```
+
+### Miks sellest ei piisa
+
+<figure markdown="span">
+  ![Vasakul admin logib ssh-ga ühte masinasse ja näeb ainult praegust hetke; paremal vm1, vm2 ja vm3 saadavad andmed kesksesse kogumisse, millest tulevad ajalugu, töölaud ja teavitus](../images/k01_keskne.svg)
+  <figcaption>Joonis 1.3. Üks masin käsitsi ja mitu masinat keskselt (Talvik, 2026).</figcaption>
+</figure>
+
+Ühe masina juures sellest piisab. Kolme või viiekümne masinaga tekivad kolm probleemi. Käsud näitavad ainult praegust hetke ja öösel olnud riket enam ei näe. Igasse masinasse tuleb eraldi sisse logida. Keegi ei anna teada, kui ketas hakkab täis saama. Monitooring lahendab need: andmed kogutakse kõigist masinatest ühte kohta, hoitakse ajas alles ja reeglid teatavad, kui midagi läheb valesti.
+
+??? question "Kontrolli ennast"
+    1. Millise käsuga näed ainult teenuse `nginx` logikirjeid viimasest tunnist?
+    2. Miks ei piisa `free -h` väljundist, kui rike oli eile öösel?
+
+    ??? success "Vastused"
+        1. `journalctl -u nginx --since "1 hour ago"`.
+        2. `free` näitab ainult praegust hetke. Eilse olukorra nägemiseks peab mälu väärtust regulaarselt koguma ja salvestama.
+
+## 5. Keskne monitooring: andmete teekond
+
+Keskne monitooring koosneb samadest osadest, ükskõik milline tööriist on kasutusel. Enne tööriistade nimesid on kasulik teada, mida iga osa teeb.
+
+Mõõdik on sama arv ikka ja jälle mõõdetuna. Käsk `free` annab ühe punkti, monitooring kogub neid iga 15 sekundi järel ja tekib **aegrida**:
+
+```text
+saadaval_mälu{masin="vm2"}  1.47 GB  kell 09:14:00
+saadaval_mälu{masin="vm2"}  1.45 GB  kell 09:14:15
+saadaval_mälu{masin="vm2"}  0.12 GB  kell 09:14:30
+```
+
+Joonis 1.4 näitab sammud ja seda, milline K1 tööriist iga sammu teeb.
+
+<figure markdown="span">
+  ![Andmete teekond kuues sammus: tekib Linuxi tuumas, avaldatakse node_exporteris aadressil /metrics, kogutakse Prometheusega iga 15 sekundi järel, salvestatakse Prometheuse andmebaasi, päritakse PromQL-iga ja näidatakse Grafanas](../images/k01_teekond.svg)
+  <figcaption>Joonis 1.4. Andmete teekond ja K1 tööriistad (Talvik, 2026).</figcaption>
+</figure>
+
+??? question "Kontrolli ennast"
+    1. Kumb samm andmete teekonnas puudub, kui node_exporter töötab, aga Prometheuse seadetes seda masinat ei ole?
+
+    ??? success "Vastus"
+        Kogumine. Andmed on avaldatud, aga keegi ei küsi neid.
+
+## 6. Mida jälgida
 
 Mõõdikuid on tuhandeid. Kaks levinud meetodit aitavad valida. Masina ressursside jaoks on Brendan Greggi [USE meetod](https://www.brendangregg.com/usemethod.html): iga ressursi kohta küsitakse kasutust (utilization), küllastust ehk ootejärjekorda (saturation) ja vigu (errors).
 
-??? note "Tabel 1.8. USE meetod masina ressurssidele"
+??? note "Tabel 1.9. USE meetod masina ressurssidele"
     | Ressurss | Kasutus | Küllastus | Vead |
     |---|---|---|---|
     | protsessor | protsessori kasutus % | koormus `uptime` väljundis | |
@@ -213,18 +254,18 @@ Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.googl
         1. Mälu küllastust: andmeid liigutatakse pidevalt mälu ja saaleala vahel ning töö ootab ketta taga. Ainult hõivatud saaleala maht ei näita veel küllastust.
         2. Vigade osakaal (errors).
 
-## 5. Tööriistad: mis oli enne, mis on praegu, kuhu see läheb
+## 7. Tööriistad: mis oli enne, mis on praegu, kuhu see läheb
 
 <figure markdown="span">
   ![Ajajoon: 1999 Nagios kontrollib, kas teenus vastab; 2001 Zabbix agendi, andmebaasi ja graafikutega; 2008 Graphite aegread; 2010 Elasticsearch logid ühte kohta; 2012 Prometheus; 2014 Grafana; 2019 OpenTelemetry üks standard; praegu sama päringu mõõdik, logi ja jälg üksteise kõrval](../images/k01_ajalugu.svg)
-  <figcaption>Joonis 1.2. Monitooringu tööriistad ajas (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.5. Monitooringu tööriistad ajas (Talvik, 2026).</figcaption>
 </figure>
 
 **Enne.** Esimesed monitooringu tööriistad, näiteks Nagios, mille esimene versioon ilmus 1999. aastal nime NetSaint all, kontrollisid kindla ajavahemiku järel, kas teenus vastab, ja andsid tulemuse kolmes olekus: OK, WARNING või CRITICAL. Logid olid igas masinas eraldi ja neid otsiti käsuga `grep`. Iga tööriist kogus oma andmed oma moel ja neid oli raske kokku viia. Järgmised viis tööriista on tänapäeval kõige levinumad, igaühel on oma tugev külg.
 
 <figure markdown="span">
   ![Viis tööriista ja nende komplektid: Zabbix agendi, serveri, andmebaasi ja veebiliidesega; Prometheus exporter'ite, Alertmanageri ja Grafanaga; Grafana komplekt Alloy, Loki, Tempo ja Mimiriga; Elastic Stack Beatsi, Logstashi, Elasticsearchi ja Kibanaga; OpenTelemetry SDK, Collector ja Jaeger](../images/k01_komplektid.svg)
-  <figcaption>Joonis 1.3. Viis levinud tööriista ja nende komplektid (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.6. Viis levinud tööriista ja nende komplektid (Talvik, 2026).</figcaption>
 </figure>
 
 ### Zabbix
@@ -264,7 +305,7 @@ Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.googl
 
 Logod on tööriistade omanike kaubamärgid: Prometheuse, OpenTelemetry ja Jaegeri logod on Cloud Native Computing Foundationi [artwork](https://github.com/cncf/artwork) hoidlast, Grafana logo Grafana hoidlast, Zabbixi ja Elasticsearchi logod Wikimedia Commonsist.
 
-??? note "Tabel 1.9. Tööriistad kursusel ja nende kõrval"
+??? note "Tabel 1.10. Tööriistad kursusel ja nende kõrval"
     | Andmeliik | Kursusel | Levinud teised | Kohtumine |
     |---|---|---|---|
     | mõõdikud | Prometheus, node_exporter, Zabbix | InfluxDB, VictoriaMetrics | K1, K2 |
@@ -276,7 +317,7 @@ Logod on tööriistade omanike kaubamärgid: Prometheuse, OpenTelemetry ja Jaege
 
 Kõik ei vaja täit komplekti. Kodulaboris või ühe inimese hallatavates masinates kasutatakse ka kergemaid tööriistu, millel on valmis töölaud ja mida ei pea seadistama. Nende hind on see, et päringukeelt ja standardset andmevormingut ei ole ning küsida saab ainult seda, mis on ette tehtud.
 
-??? note "Tabel 1.10. Kerged tööriistad"
+??? note "Tabel 1.11. Kerged tööriistad"
     | Tööriist | Mis see on | Sobib, kui | Puudub |
     |---|---|---|---|
     | [Beszel](https://github.com/henrygd/beszel) | väike keskserver ja agent igas masinas, valmis töölaud ja lihtsad alarmid | kodulabor, mõni masin, üks kasutaja | päringukeel, logid, jäljed |
@@ -287,7 +328,7 @@ Täna alustad mõõdikutest. Prometheus küsib mõõdikuid jälgitavatelt masina
 
 <figure markdown="span">
   ![Prometheuse server küsib target'itelt mõõdikuid, salvestab need aegridade andmebaasi ja vastab PromQL-i päringutele; andmeid kasutavad veebiliides, Grafana ja Alertmanager](../images/k01_ylesehitus.svg)
-  <figcaption>Joonis 1.4. Prometheuse ülesehitus: kogumine, aegridade andmebaas ja PromQL, Prometheuse ülevaate järgi (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.7. Prometheuse ülesehitus: kogumine, aegridade andmebaas ja PromQL, Prometheuse ülevaate järgi (Talvik, 2026).</figcaption>
 </figure>
 
 ??? question "Kontrolli ennast"
@@ -300,7 +341,7 @@ Täna alustad mõõdikutest. Prometheus küsib mõõdikuid jälgitavatelt masina
         2. OpenTelemetry ei hoia ega näita andmeid, see on standard, millega rakendus andmed välja annab. Prometheus ja Jaeger hoiavad ja näitavad andmeid.
         3. Beszel'is pole päringukeelt, seal saab vaadata ainult ette tehtud graafikuid.
 
-## 6. Kes avab ühenduse
+## 8. Kes avab ühenduse
 
 Mõõdikute kogumisel on kaks küsimust: kes avab ühenduse ja milline komponent tagastab väärtused. Prometheuse puhul avab ühenduse Prometheus ja exporter tagastab korraga kõik oma mõõdikud. See on **pull-mudel**. Kui jälgitav masin saadab andmed ise keskserverisse, on see **push-mudel**: nii töötavad näiteks Zabbixi aktiivne agent, Telegraf ja OpenTelemetry, mida kasutad K4-s.
 
@@ -308,7 +349,7 @@ Pull-mudelis peab jälgitavas masinas olema port lahti ja server peab teadma kõ
 
 <figure markdown="span">
   ![Prometheus vm3-s saadab vm2 ja vm1 node_exporterile päringu GET /metrics ja saab vastuseks mõõteväärtused](../images/k01_kes_kusib.svg)
-  <figcaption>Joonis 1.5. Prometheus küsib jälgitavate masinate node_exporteritelt mõõdikuid. Ühenduse avab Prometheus, exporter ainult vastab (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.8. Prometheus küsib jälgitavate masinate node_exporteritelt mõõdikuid. Ühenduse avab Prometheus, exporter ainult vastab (Talvik, 2026).</figcaption>
 </figure>
 
 ??? question "Kontrolli ennast"
@@ -317,7 +358,7 @@ Pull-mudelis peab jälgitavas masinas olema port lahti ja server peab teadma kõ
     ??? success "Vastus"
         Ei saa, sest pull-mudelis avab ühenduse Prometheus. Sellises olukorras sobib push-mudel: masin saadab andmed ise väljapoole, mida tulemüür tavaliselt lubab.
 
-## 7. Exporter ja /metrics
+## 9. Exporter ja /metrics
 
 **Exporter** on programm, mis loeb mõõdikud ja avaldab need HTTP-aadressil `/metrics`. Masina näitude jaoks on [node_exporter](https://github.com/prometheus/node_exporter). See loeb Linuxi tuuma faile kaustades `/proc` ja `/sys`, kust samu numbreid loevad ka käsud `free`, `df` ja `top`.
 
@@ -337,7 +378,7 @@ node_cpu_seconds_total{cpu="0",mode="idle"} 81432.17
 
 <figure markdown="span">
   ![Mõõdikurida node_cpu_seconds_total cpu 0 mode idle väärtusega: mõõdiku nimi, sildid ja väärtus; sama nimi eri siltidega annab eri aegread](../images/k01_moodikurida.svg)
-  <figcaption>Joonis 1.6. Mõõdiku nimi ja sildid ehk label'id valivad päringu jaoks õige aegrea. Prometheus lisab kogumisel sildid `job` ja `instance` (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.9. Mõõdiku nimi ja sildid ehk label'id valivad päringu jaoks õige aegrea. Prometheus lisab kogumisel sildid `job` ja `instance` (Talvik, 2026).</figcaption>
 </figure>
 
 Mõõteväärtuse real on mõõdiku **nimi** (`node_filesystem_avail_bytes`) ja **väärtus** (`1.2034e+10`). Kui mõõdikul on **sildid** ehk label'id, on need nime järel loogelistes sulgudes (`mountpoint="/"`), mälumõõdikul neid pole. `e+10` tähendab korrutamist arvuga 10¹⁰. Read `# TYPE` ja `# HELP` kirjeldavad mõõdiku tüüpi ja tähendust. Ühik on nime lõpus: `_bytes` tähendab baite ja `_seconds_total` sekundeid kokku.
@@ -350,7 +391,7 @@ Mõõdikutüüpe on kaks, mida täna kasutad ([Metric types](https://prometheus.
     ??? success "Vastus"
         Ei tõenda. Brauser ühendub klassiarvutist, Prometheus aga vm3 konteinerist. Teel võivad olla teised tulemüürireeglid ja `prometheus.yml`-is võib olla vale aadress või port. Kogumist tõendab Prometheuse **Targets**-leht ja päring, mis leiab aegrea.
 
-## 8. Target, scrape ja silt
+## 10. Target, scrape ja silt
 
 Prometheus loeb oma seadeid failist `prometheus.yml`. Seal on kirjas, keda küsida ja kui tihti. Näite aadressid asenda oma laborimasinate aadressidega:
 
@@ -368,12 +409,12 @@ scrape_configs:
 
 <figure markdown="span">
   ![Neli kogumist 15 sekundi järel: kolm õnnestuvad ja annavad väärtuse ning up=1, üks ebaõnnestub, väärtus puudub ja up=0](../images/k01_scrape_ajas.svg)
-  <figcaption>Joonis 1.7. Iga kogumine lisab aegreale punkti ja salvestab mõõdiku up. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.10. Iga kogumine lisab aegreale punkti ja salvestab mõõdiku up. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
 </figure>
 
 <figure markdown="span">
   ![Kolm salvestatud punkti: mõõdiku nimi, sildid ja ajatempel moodustavad võtme, millele kuulub väärtus; kaks punkti on samast aegreast, kolmas teisest](../images/k01_aegrea_punkt.svg)
-  <figcaption>Joonis 1.8. Mida Prometheus salvestab: nimi, sildid ja ajatempel kokku on võti, millele kuulub mõõdetud väärtus (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.11. Mida Prometheus salvestab: nimi, sildid ja ajatempel kokku on võti, millele kuulub mõõdetud väärtus (Talvik, 2026).</figcaption>
 </figure>
 
 Mõõdiku nimi koos siltide väärtustega määrab ühe **aegrea**. Kui masin avaldab iga loogilise protsessori kohta kaheksa `mode` väärtust, tekib kahe loogilise protsessori korral `node_cpu_seconds_total` jaoks 16 aegrida. Kaks sellist masinat annavad 32 aegrida.
@@ -384,11 +425,11 @@ Mõõdiku nimi koos siltide väärtustega määrab ühe **aegrea**. Kui masin av
     ??? success "Vastus"
         32: neli protsessorit korda kaheksa `mode` väärtust.
 
-## 9. Kuidas kogumist kontrollida
+## 11. Kuidas kogumist kontrollida
 
 Kui päring ei leia midagi, võib viga olla viies kohas. Kontrolli neid järjest, sest iga samm eeldab eelmist.
 
-??? note "Tabel 1.11. Kogumise kontroll sammhaaval"
+??? note "Tabel 1.12. Kogumise kontroll sammhaaval"
     | Samm | Kus | Kuidas kontrollid | Mida tulemus tõendab |
     |---|---|---|---|
     | 1. Exporter töötab | jälgitav masin | `systemctl is-active node_exporter` | systemd peab teenust aktiivseks |
@@ -401,7 +442,7 @@ Kui päring ei leia midagi, võib viga olla viies kohas. Kontrolli neid järjest
 
 <figure markdown="span">
   ![Viis järjestikust kontrollpunkti: exporter töötab, /metrics vastab, võrk ja tulemüür, Prometheus kogus, päring leiab aegread; iga sammu juures küsimus](../images/k01_kontroll.svg)
-  <figcaption>Joonis 1.9. Kogumise kontroll: alusta sealt, kus esimene kontroll ebaõnnestub (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.12. Kogumise kontroll: alusta sealt, kus esimene kontroll ebaõnnestub (Talvik, 2026).</figcaption>
 </figure>
 
 ??? question "Kontrolli ennast"
@@ -410,7 +451,7 @@ Kui päring ei leia midagi, võib viga olla viies kohas. Kontrolli neid järjest
     ??? success "Vastus"
         Võrk vm3 ja vm1 vahel töötab, sest vm1 vastas, aga keeldus ühendusest. Alusta sammust 1: kas `node_exporter` töötab vm1-s. Kui töötab, kontrolli sammu 2: kas port 9100 on tulemüüris lahti.
 
-## 10. PromQL kolme küsimuse kaudu
+## 12. PromQL kolme küsimuse kaudu
 
 Prometheuse päringukeel on [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/). Päringu kirjutad Prometheuse veebiliideses lehel **Query** või Grafana paneelis. Praktikumis koostad päringud kolmele küsimusele ja iga küsimus lisab päringukeelest ühe osa.
 
@@ -425,17 +466,17 @@ Jagamine paneb kokku read, millel on samad sildid, seega saad iga masina kohta �
 
 <figure markdown="span">
   ![Ainult mõõdiku nimi annab kaks rida, sildifilter jätab ühe masina, jagamine annab iga masina kohta ühe protsendi](../images/k01_sildifilter.svg)
-  <figcaption>Joonis 1.10. Sildifilter valib aegread, jagamine paaritab read samade siltide järgi. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.13. Sildifilter valib aegread, jagamine paaritab read samade siltide järgi. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
 </figure>
 
 <figure markdown="span">
   ![MemAvailable ja MemTotal read paaritatakse silti instance järgi; rida, millel paarilist pole, jääb tulemusest välja](../images/k01_sobitamine.svg)
-  <figcaption>Joonis 1.11. Jagamine sobitab read samade siltide järgi (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.14. Jagamine sobitab read samade siltide järgi (Talvik, 2026).</figcaption>
 </figure>
 
 Sildifiltris saab kasutada nelja operaatorit ([Querying basics](https://prometheus.io/docs/prometheus/latest/querying/basics/#time-series-selectors)):
 
-??? note "Tabel 1.12. Sildifiltri operaatorid"
+??? note "Tabel 1.13. Sildifiltri operaatorid"
     | Operaator | Tähendus | Näide |
     |---|---|---|
     | `=` | võrdne | `node_filesystem_avail_bytes{mountpoint="/"}` |
@@ -452,14 +493,14 @@ Sildifiltris saab kasutada nelja operaatorit ([Querying basics](https://promethe
 
 <figure markdown="span">
   ![Vasakul instant vector: igast aegreast üks viimane väärtus; paremal range vector: viimase minuti väärtused, mis lähevad funktsiooni rate sisse](../images/k01_vektorid.svg)
-  <figcaption>Joonis 1.12. Instant vector annab ühe väärtuse, range vector `[1m]` annab väärtused ajavahemikus (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.15. Instant vector annab ühe väärtuse, range vector `[1m]` annab väärtused ajavahemikus (Talvik, 2026).</figcaption>
 </figure>
 
 **Kuidas muutub protsessori kasutus koormuskatse ajal?** `node_cpu_seconds_total` on counter. Counteri toorväärtus ütleb ainult, kui palju aega on kokku kulunud, kiiruse saamiseks loetakse kaks väärtust ja jagatakse vahe ajaga. Funktsioon `rate()` arvutab ajavahemiku `[1m]` väärtuste põhjal counteri keskmise kasvu sekundis ja arvestab ka counteri lähtestumist ([rate()](https://prometheus.io/docs/prometheus/latest/querying/functions/#rate)). Kasuta seda counterite, mitte gauge'ide jaoks. Jõudeoleku (`mode="idle"`) kasv on iga protsessori kohta 0 ja 1 vahel. `avg by (instance)` arvutab iga masina loogiliste protsessorite keskmise ja `100 * (1 - ...)` näitab, mitu protsenti ajast protsessor ei olnud jõudeolekus. Sinna kuulub ka sisend-väljundi ootamine (`iowait`) ja virtuaalmasinast äravõetud aeg (`steal`), nii et suure väärtuse põhjuse leidmiseks vaata ka eri olekuid päringuga `avg by (mode) (rate(node_cpu_seconds_total[1m]))`.
 
 <figure markdown="span">
   ![Ülal counteri toorväärtus, mis koormuse ajal peaaegu ei kasva; all rate, mis koormuse ajal langeb nulli lähedale](../images/k01_counter_rate.svg)
-  <figcaption>Joonis 1.13. Counteri toorväärtus ja selle kasv sekundis koormuskatse ajal. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.16. Counteri toorväärtus ja selle kasv sekundis koormuskatse ajal. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
 </figure>
 
 ```text
@@ -471,7 +512,7 @@ avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))
 
 <figure markdown="span">
   ![Neli sammu: node_cpu_seconds_total idle, siis rate, siis avg by instance, siis 100 korda 1 miinus tulemus; iga sammu kõrval tulemuse näide](../images/k01_paring.svg)
-  <figcaption>Joonis 1.14. Protsessori kasutuse päring tekib neljas sammus: loendur, kasv sekundis, keskmine masina kohta ja jõudeajast üle jäänud aja osakaal protsentides. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.17. Protsessori kasutuse päring tekib neljas sammus: loendur, kasv sekundis, keskmine masina kohta ja jõudeajast üle jäänud aja osakaal protsentides. Väärtused on illustratiivsed (Talvik, 2026).</figcaption>
 </figure>
 
 15-sekundilise kogumisintervalli juures kasutame üheminutilist akent. Mitut mõõtmist hõlmav aken teeb tulemuse stabiilsemaks, pikem aken silub lühikesi muutusi rohkem. Uus mõõtmine mõjutab tulemust kohe, aga täielikult jõuab muutus tulemusse alles akna jooksul.
@@ -480,7 +521,7 @@ Võrdlus, näiteks `< 20`, jätab alles ainult read, mille kohta tingimus kehtib
 
 <figure markdown="span">
   ![Kolm rida vaba ruumi protsendiga; tingimus alla 20 jätab alles ainult ühe masina juurfailisüsteemi rea](../images/k01_vordlus.svg)
-  <figcaption>Joonis 1.15. Võrdlus filtreerib read: alles jäävad ainult need, mille kohta tingimus kehtib (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.18. Võrdlus filtreerib read: alles jäävad ainult need, mille kohta tingimus kehtib (Talvik, 2026).</figcaption>
 </figure>
 
 ??? question "Kontrolli ennast"
@@ -493,7 +534,7 @@ Võrdlus, näiteks `< 20`, jätab alles ainult read, mille kohta tingimus kehtib
         2. Ei. Uus mõõtmine mõjutab tulemust kohe, aga täielikult jõuab muutus tulemusse alles umbes minuti jooksul.
         3. Protsent, iga masina kohta arv 0 ja 100 vahel.
 
-## 11. Grafana: andmeallikas, paneel ja töölaud
+## 13. Grafana: andmeallikas, paneel ja töölaud
 
 Prometheuse veebiliides sobib päringu koostamiseks ja kontrollimiseks. Igapäevaseks vaatamiseks kasutatakse [Grafanat](https://grafana.com/docs/grafana/latest/): see küsib andmed Prometheusest ja näitab neid töölaual. Grafana ise mõõdikuid ei kogu ega salvesta.
 
@@ -506,6 +547,61 @@ Kogukond jagab valmis töölaudu lehel [grafana.com/dashboards](https://grafana.
 
     ??? success "Vastus"
         Andmeallikas: kas Grafana jõuab Prometheuseni (**Connections → Data sources → Save & test**) ja kas paneel kasutab õiget andmeallikat. Seejärel paneeli ajavahemik paremal üleval: kui see on enne kogumise algust, pole andmeid.
+
+## 14. Läbiv näide: kui palju mälu on vm2-s saadaval
+
+Kõik loengu osad on üks andmete tee. Sama küsimus, kui palju mälu on vm2-s saadaval, viis sammu järjest: Linuxi käsk, exporter, Prometheus, päring ja Grafana. Ekraanipildid on tehtud K1 komplektiga, mille masinate aadressid on 127.0.0.1 ja 127.0.0.2. Sinu vm-ides on nende asemel vm1 ja vm2 IP-aadressid.
+
+**1. Linuxi käsk.** `free -h` näitab veerus `available` saadaval mälu praegusel hetkel.
+
+```text
+               total        used        free      shared  buff/cache   available
+Mem:            15Gi       3.7Gi       8.1Gi       4.0Mi       3.9Gi        11Gi
+```
+
+**2. Exporter.** node_exporter avaldab sama arvu baitides aadressil `/metrics`. Rida `# TYPE` ütleb, et see on gauge.
+
+```text
+# HELP node_memory_MemAvailable_bytes Memory information field MemAvailable_bytes.
+# TYPE node_memory_MemAvailable_bytes gauge
+node_memory_MemAvailable_bytes 1.209946112e+10
+```
+
+**3. Prometheus kogub.** Leht **Status → Target health** näitab, et Prometheus küsib mõlemalt masinalt ja kogumine õnnestub: olek `UP`, viimane kogumine mõni sekund tagasi.
+
+<figure markdown="span">
+  ![Prometheuse Target health leht: töö node, kaks endpointi 127.0.0.1:9100 ja 127.0.0.2:9100, sildid instance ja job, viimane kogumine mõni sekund tagasi, olek UP, kokku 2/2 up](../images/k01_ekraan_targets.png)
+  <figcaption>Joonis 1.19. Prometheuse Target health: mõlemad target'id on UP (Talvik, 2026).</figcaption>
+</figure>
+
+**4. Päring.** Lehel **Query** annab päring `node_memory_MemAvailable_bytes` ühe rea iga masina kohta. Prometheus on lisanud sildid `instance` ja `job`.
+
+<figure markdown="span">
+  ![Prometheuse Query leht: päring node_memory_MemAvailable_bytes, tabelis kaks rida, instance 127.0.0.1:9100 ja 127.0.0.2:9100, väärtused umbes 12 miljardit baiti](../images/k01_ekraan_query.png)
+  <figcaption>Joonis 1.20. Päringu tulemus: üks rida masina kohta (Talvik, 2026).</figcaption>
+</figure>
+
+**5. Grafana.** Paneel näitab sama päringut ajas, ühikuga GiB ja legendis masinate aadressid. Kõrval on protsessori kasutuse paneel osa 12 päringuga. Mõlemad masinad said koormuskatse ajal sama koormuse, seepärast on jooned peaaegu kohakuti.
+
+<figure markdown="span">
+  ![Grafana töölaud K1 kahe paneeliga: vasakul saadaval mälu kahe masina kohta umbes 11 GiB, paremal protsessori kasutus protsentides, mis koormuskatse ajal tõuseb 80 protsendini ja langeb](../images/k01_ekraan_grafana_k1.png)
+  <figcaption>Joonis 1.21. Oma töölaud: saadaval mälu ja protsessori kasutus (Talvik, 2026).</figcaption>
+</figure>
+
+Valmis töölaud **Node Exporter Full**, mille ID on 1860, näitab kohe kümneid paneele: protsessor, mälu, saaleala, kettaruum, võrk. See annab kiire ülevaate, aga küsimusele „millises masinas on mälu kõige vähem“ vastab selgemini oma paneel.
+
+<figure markdown="span">
+  ![Grafana töölaud Node Exporter Full: ülal näidikud CPU Busy, Sys Load, RAM Used, SWAP Used, Root FS Used ning protsessorite arv, mälu ja ketta suurus; all graafikud CPU Basic, Memory Basic, Network Traffic Basic ja Disk Space Used Basic](../images/k01_ekraan_grafana_1860.png)
+  <figcaption>Joonis 1.22. Valmis töölaud Node Exporter Full (Talvik, 2026).</figcaption>
+</figure>
+
+??? question "Kontrolli ennast"
+    1. Millises sammus näed esimest korda saadaval mälu ajaloo, mitte ainult praeguse väärtuse?
+    2. Target health näitab olekut `DOWN`. Millist sammu kontrollid järgmisena?
+
+    ??? success "Vastused"
+        1. Prometheuses: alates kogumisest salvestatakse iga väärtus koos ajaga, nii et päringu ja Grafana graafikul on näha ka minevik.
+        2. Exporterit: kas node_exporter töötab ja kas `curl http://<vm2-IP>:9100/metrics` vastab vm3-st.
 
 ??? abstract "Kokkuvõte"
     | Mõiste | Lühidalt |

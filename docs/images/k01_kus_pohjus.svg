@@ -1,0 +1,24 @@
+<svg viewBox="0 0 1000 260" xmlns="http://www.w3.org/2000/svg" font-family="Inter, -apple-system, sans-serif">
+<rect width="1000" height="260" fill="#ffffff"/>
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#546e7a"/></marker></defs>
+<text x="500" y="32" text-anchor="middle" font-size="19" font-weight="700" fill="#263238">„Leht on aeglane.“ Kus on põhjus?</text>
+<rect x="40" y="70" width="180" height="70" rx="10" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+<text x="130" y="102" text-anchor="middle" font-size="16" font-weight="700" fill="#263238">kasutaja</text>
+<text x="130" y="124" text-anchor="middle" font-size="12" fill="#546e7a">brauser</text>
+<line x1="222" y1="105" x2="276" y2="105" stroke="#546e7a" stroke-width="2.5" marker-end="url(#a)"/>
+<rect x="280" y="70" width="180" height="70" rx="10" fill="#e0f2f1" stroke="#00796b" stroke-width="2"/>
+<text x="370" y="102" text-anchor="middle" font-size="16" font-weight="700" fill="#263238">veebiserver</text>
+<text x="370" y="124" text-anchor="middle" font-size="12" fill="#546e7a">nginx</text>
+<line x1="462" y1="105" x2="516" y2="105" stroke="#546e7a" stroke-width="2.5" marker-end="url(#a)"/>
+<text x="370" y="185" text-anchor="middle" font-size="34" font-weight="700" fill="#e65100">?</text>
+<rect x="520" y="70" width="180" height="70" rx="10" fill="#e0f2f1" stroke="#00796b" stroke-width="2"/>
+<text x="610" y="102" text-anchor="middle" font-size="16" font-weight="700" fill="#263238">rakendus</text>
+<text x="610" y="124" text-anchor="middle" font-size="12" fill="#546e7a">app</text>
+<line x1="702" y1="105" x2="756" y2="105" stroke="#546e7a" stroke-width="2.5" marker-end="url(#a)"/>
+<text x="610" y="185" text-anchor="middle" font-size="34" font-weight="700" fill="#e65100">?</text>
+<rect x="760" y="70" width="180" height="70" rx="10" fill="#e0f2f1" stroke="#00796b" stroke-width="2"/>
+<text x="850" y="102" text-anchor="middle" font-size="16" font-weight="700" fill="#263238">andmebaas</text>
+<text x="850" y="124" text-anchor="middle" font-size="12" fill="#546e7a">PostgreSQL</text>
+<text x="850" y="185" text-anchor="middle" font-size="34" font-weight="700" fill="#e65100">?</text>
+<text x="500" y="225" text-anchor="middle" font-size="13" fill="#263238">Kas teenus töötab? · Kas masinal jätkub ressursse? · Millal aeglus algas? · Mis enne seda muutus?</text>
+</svg>

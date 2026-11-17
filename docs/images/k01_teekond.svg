@@ -1,0 +1,47 @@
+<svg viewBox="0 0 1200 250" xmlns="http://www.w3.org/2000/svg" font-family="Inter, -apple-system, sans-serif">
+<rect width="1200" height="250" fill="#ffffff"/>
+<defs><marker id="n" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#00796b"/></marker></defs>
+<text x="600" y="30" text-anchor="middle" font-size="18" font-weight="700" fill="#263238">Andmete teekond ja K1 tööriistad</text>
+<rect x="6" y="55" width="178" height="80" rx="10" fill="#e0f2f1" stroke="#00796b" stroke-width="2"/>
+<text x="95" y="88" text-anchor="middle" font-size="15" font-weight="700" fill="#004d40">1. tekib</text>
+<text x="95" y="112" text-anchor="middle" font-size="12" fill="#263238">allikas mõõdab</text>
+<rect x="6" y="160" width="178" height="44" rx="8" fill="#fff8e1" stroke="#ff8f00"/>
+<text x="95" y="187" text-anchor="middle" font-size="12" font-weight="700" fill="#e65100">Linuxi tuum</text>
+<line x1="95" y1="135" x2="95" y2="158" stroke="#ff8f00" stroke-dasharray="3 3"/>
+<line x1="186" y1="95" x2="204" y2="95" stroke="#00796b" stroke-width="2.5" marker-end="url(#n)"/>
+<rect x="208" y="55" width="178" height="80" rx="10" fill="#e0f2f1" stroke="#00796b" stroke-width="2"/>
+<text x="297" y="88" text-anchor="middle" font-size="15" font-weight="700" fill="#004d40">2. avaldatakse</text>
+<text x="297" y="112" text-anchor="middle" font-size="12" fill="#263238">kokkulepitud kujul</text>
+<rect x="208" y="160" width="178" height="44" rx="8" fill="#fff8e1" stroke="#ff8f00"/>
+<text x="297" y="187" text-anchor="middle" font-size="12" font-weight="700" fill="#e65100">node_exporter /metrics</text>
+<line x1="297" y1="135" x2="297" y2="158" stroke="#ff8f00" stroke-dasharray="3 3"/>
+<line x1="388" y1="95" x2="406" y2="95" stroke="#00796b" stroke-width="2.5" marker-end="url(#n)"/>
+<rect x="410" y="55" width="178" height="80" rx="10" fill="#e0f2f1" stroke="#00796b" stroke-width="2"/>
+<text x="499" y="88" text-anchor="middle" font-size="15" font-weight="700" fill="#004d40">3. kogutakse</text>
+<text x="499" y="112" text-anchor="middle" font-size="12" fill="#263238">keskserver toob</text>
+<rect x="410" y="160" width="178" height="44" rx="8" fill="#fff8e1" stroke="#ff8f00"/>
+<text x="499" y="187" text-anchor="middle" font-size="12" font-weight="700" fill="#e65100">Prometheus iga 15 s</text>
+<line x1="499" y1="135" x2="499" y2="158" stroke="#ff8f00" stroke-dasharray="3 3"/>
+<line x1="590" y1="95" x2="608" y2="95" stroke="#00796b" stroke-width="2.5" marker-end="url(#n)"/>
+<rect x="612" y="55" width="178" height="80" rx="10" fill="#e0f2f1" stroke="#00796b" stroke-width="2"/>
+<text x="701" y="88" text-anchor="middle" font-size="15" font-weight="700" fill="#004d40">4. salvestatakse</text>
+<text x="701" y="112" text-anchor="middle" font-size="12" fill="#263238">aegridadena</text>
+<rect x="612" y="160" width="178" height="44" rx="8" fill="#fff8e1" stroke="#ff8f00"/>
+<text x="701" y="187" text-anchor="middle" font-size="12" font-weight="700" fill="#e65100">Prometheuse andmebaas</text>
+<line x1="701" y1="135" x2="701" y2="158" stroke="#ff8f00" stroke-dasharray="3 3"/>
+<line x1="792" y1="95" x2="810" y2="95" stroke="#00796b" stroke-width="2.5" marker-end="url(#n)"/>
+<rect x="814" y="55" width="178" height="80" rx="10" fill="#e0f2f1" stroke="#00796b" stroke-width="2"/>
+<text x="903" y="88" text-anchor="middle" font-size="15" font-weight="700" fill="#004d40">5. päritakse</text>
+<text x="903" y="112" text-anchor="middle" font-size="12" fill="#263238">vastus küsimusele</text>
+<rect x="814" y="160" width="178" height="44" rx="8" fill="#fff8e1" stroke="#ff8f00"/>
+<text x="903" y="187" text-anchor="middle" font-size="12" font-weight="700" fill="#e65100">PromQL</text>
+<line x1="903" y1="135" x2="903" y2="158" stroke="#ff8f00" stroke-dasharray="3 3"/>
+<line x1="994" y1="95" x2="1012" y2="95" stroke="#00796b" stroke-width="2.5" marker-end="url(#n)"/>
+<rect x="1016" y="55" width="178" height="80" rx="10" fill="#e0f2f1" stroke="#00796b" stroke-width="2"/>
+<text x="1105" y="88" text-anchor="middle" font-size="15" font-weight="700" fill="#004d40">6. näidatakse</text>
+<text x="1105" y="112" text-anchor="middle" font-size="12" fill="#263238">töölaud ja alarm</text>
+<rect x="1016" y="160" width="178" height="44" rx="8" fill="#fff8e1" stroke="#ff8f00"/>
+<text x="1105" y="187" text-anchor="middle" font-size="12" font-weight="700" fill="#e65100">Grafana</text>
+<line x1="1105" y1="135" x2="1105" y2="158" stroke="#ff8f00" stroke-dasharray="3 3"/>
+<text x="600" y="232" text-anchor="middle" font-size="12" fill="#546e7a">Sammud on samad iga tööriistaga, muutub ainult see, mis tööriist sammu teeb.</text>
+</svg>

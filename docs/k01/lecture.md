@@ -100,6 +100,16 @@ Mõõdikud on kõige odavamad koguda ja hoida, sest üks väärtus on üks arv. 
 
 Rikke juures loetakse kahte aega. **Avastamise aeg** on rikke algusest selle märkamiseni, **parandamise aeg** on märkamisest taastumiseni. Ilma monitooringuta on avastamise aeg see, kuni kasutaja helistab. Monitooring lühendab mõlemat: alarm teatab enne kasutajat ja kogutud andmed näitavad, kust põhjust otsida.
 
+??? question "Kontrolli ennast"
+    1. Mis liiki telemeetria on rida „kommutaatori port 3 läks maha kell 14.05“?
+    2. Miks on mõõdikut odavam hoida kui logi?
+    3. Kumb samm andmete teekonnas puudub, kui node_exporter töötab, aga Prometheuse seadetes seda masinat ei ole?
+
+    ??? success "Vastused"
+        1. Sündmus: üks juhtum kindlal hetkel koos andmetega, milline seade ja mis juhtus.
+        2. Üks mõõdiku väärtus on üks arv koos ajatempliga, logirida on vaba tekst, mida on palju ja mida tuleb otsingu jaoks indekseerida.
+        3. Kogumine. Andmed on avaldatud, aga keegi ei küsi neid.
+
 ## 3. Seire ja jälgitavus
 
 Eesti keeles kasutatakse sama asja kohta kahte sõna, seire ja monitooring, need tähendavad sama. **Seire** (monitoring) on andmete kogumine ja nende põhjal aruande tegemine mõõdikute kohta, mis näitavad süsteemi tervist. Töölaual on protsessori kasutus, sest seda tahetakse näha, ja alarm teatab, kui ketas on 90% täis. Seire eeldab, et võimalikud rikked on ette teada.
@@ -151,6 +161,14 @@ Rakenduse jälgitavus algab kolmest sammust. Kõigepealt lisatakse rakendusse te
 
 Töökohas on vaja mõlemat. Seire annab teada tuntud riketest, jälgitavus aitab leida põhjuse, kui juhtub midagi uut. Kursus liigub samas järjekorras: K1 ja K2 on seire, K3 ja K4 lisavad logid ja jäljed, K5 kasutab kõike koos.
 
+??? question "Kontrolli ennast"
+    1. Kas alarm „ketas on 90% täis“ on seire või jälgitavus?
+    2. Kasutajad ütlevad, et pärast uut versiooni on leht aeglane, aga ükski alarm ei käivitunud. Millised andmed aitavad põhjuse leida?
+
+    ??? success "Vastused"
+        1. Seire: küsimus ja piir on ette teada.
+        2. Mõõdikud näitavad, millal aeglus algas, logid näitavad, mis samal ajal juhtus, ja jälg näitab, millises teenuses päring aega kulutab.
+
 ## 4. Andmete jälgitavus
 
 Sama sõna kasutatakse ka teises tähenduses. **Andmete jälgitavus** (data observability) ei jälgi servereid ega rakendusi, vaid andmeid ennast: kas aruandesse ja andmebaasi jõudnud andmed on värsked, täielikud ja õiged. IBM-i artikkel [What is data observability?](https://www.ibm.com/think/topics/data-observability) määratleb selle kui andmete jälgimise, haldamise ja hoidmise nii, et nende kvaliteet, kättesaadavus ja usaldusväärsus oleksid tagatud.
@@ -168,6 +186,12 @@ Erinevus on selles, kuidas rike paistab. Kui rakendus seisab, märkavad kasutaja
 
 Seda kursusel lähemalt ei käsitleta. Tööriistad on sarnased: andmetöötluse iga samm annab välja mõõdikud, need salvestatakse aegridadena ja alarm teatab, kui värskus, maht või jaotus läheb lubatud piiridest välja.
 
+??? question "Kontrolli ennast"
+    1. Töölaud näitab, et kõik serverid töötavad, aga aruandes on eilsed numbrid. Millist andmete jälgitavuse tunnust see rikub?
+
+    ??? success "Vastus"
+        Värskust. Andmed ei ole uuenenud, kuigi süsteem töötab.
+
 ## 5. Mida jälgida
 
 Mõõdikuid on tuhandeid. Kaks levinud meetodit aitavad valida. Masina ressursside jaoks on Brendan Greggi [USE meetod](https://www.brendangregg.com/usemethod.html): iga ressursi kohta küsitakse kasutust (utilization), küllastust ehk ootejärjekorda (saturation) ja vigu (errors).
@@ -181,6 +205,14 @@ Mõõdikuid on tuhandeid. Kaks levinud meetodit aitavad valida. Masina ressurssi
     | võrk | ribalaiuse kasutus | kadunud paketid | liidese vead |
 
 Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.google/sre-book/monitoring-distributed-systems/): vastuse aeg (latency), päringute hulk (traffic), vigade osakaal (errors) ja küllastus (saturation). Need näitavad, mida kasutaja kogeb. Täna jälgid USE meetodi järgi masinaid, teenuse signaalid tulevad K2-s ja K4-s.
+
+??? question "Kontrolli ennast"
+    1. Mälu kasutus on 60%, aga saalealat kasutatakse palju. Kas see on kasutuse, küllastuse või vea näit USE meetodis?
+    2. Milline neljast kuldsest signaalist muutub esimesena, kui teenus hakkab kasutajale vigu andma?
+
+    ??? success "Vastused"
+        1. Küllastus: mälu ei jätku ja osa tööd ootab ketta taga.
+        2. Vigade osakaal (errors).
 
 ## 6. Tööriistad: mis oli enne, mis on praegu, kuhu see läheb
 
@@ -245,6 +277,16 @@ Täna alustad mõõdikutest. Prometheus küsib mõõdikuid jälgitavatelt masina
   ![Prometheuse server küsib target'itelt mõõdikuid, salvestab need aegridade andmebaasi ja vastab PromQL-i päringutele; andmeid kasutavad veebiliides, Grafana ja Alertmanager](../images/k01_ylesehitus.svg)
   <figcaption>Joonis 1.4. Prometheuse ülesehitus: kogumine, aegridade andmebaas ja PromQL ([Prometheuse ülevaade](https://prometheus.io/docs/introduction/overview/)) (Talvik, 2026).</figcaption>
 </figure>
+
+??? question "Kontrolli ennast"
+    1. Milline tööriist sobib, kui on vaja otsida logidest kiiresti teksti?
+    2. Mille poolest erineb OpenTelemetry Prometheusest ja Jaegerist?
+    3. Miks ei piisa kodulabori Beszel'ist, kui tahad küsida „millises masinas mälu kõige kiiremini väheneb“?
+
+    ??? success "Vastused"
+        1. Elastic Stack või OpenSearch, sest Elasticsearch on otsingumootor.
+        2. OpenTelemetry ei hoia ega näita andmeid, see on standard, millega rakendus andmed välja annab. Prometheus ja Jaeger hoiavad ja näitavad andmeid.
+        3. Beszel'is pole päringukeelt, seal saab vaadata ainult ette tehtud graafikuid.
 
 ## 7. Kes avab ühenduse
 

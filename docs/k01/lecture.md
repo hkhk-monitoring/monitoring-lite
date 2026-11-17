@@ -169,30 +169,29 @@ Töökohas on vaja mõlemat. Seire annab teada tuntud riketest, jälgitavus aita
         1. Seire: küsimus ja piir on ette teada.
         2. Mõõdikud näitavad, millal aeglus algas, logid näitavad, mis samal ajal juhtus, ja jälg näitab, millises teenuses päring aega kulutab.
 
-## 4. Andmete jälgitavus
+??? info "Lisaks: andmete jälgitavus"
+    Sama sõna kasutatakse ka teises tähenduses. **Andmete jälgitavus** (data observability) ei jälgi servereid ega rakendusi, vaid andmeid ennast: kas aruandesse ja andmebaasi jõudnud andmed on värsked, täielikud ja õiged. IBM-i artikkel [What is data observability?](https://www.ibm.com/think/topics/data-observability) määratleb selle kui andmete jälgimise, haldamise ja hoidmise nii, et nende kvaliteet, kättesaadavus ja usaldusväärsus oleksid tagatud.
 
-Sama sõna kasutatakse ka teises tähenduses. **Andmete jälgitavus** (data observability) ei jälgi servereid ega rakendusi, vaid andmeid ennast: kas aruandesse ja andmebaasi jõudnud andmed on värsked, täielikud ja õiged. IBM-i artikkel [What is data observability?](https://www.ibm.com/think/topics/data-observability) määratleb selle kui andmete jälgimise, haldamise ja hoidmise nii, et nende kvaliteet, kättesaadavus ja usaldusväärsus oleksid tagatud.
+    Erinevus on selles, kuidas rike paistab. Kui rakendus seisab, märkavad kasutajad seda kohe. Kui andmed on vigased, töötab kõik edasi, töölaud näitab valesid numbreid ja neid võidakse kasutada kaua, enne kui keegi märkab.
 
-Erinevus on selles, kuidas rike paistab. Kui rakendus seisab, märkavad kasutajad seda kohe. Kui andmed on vigased, töötab kõik edasi, töölaud näitab valesid numbreid ja neid võidakse kasutada kaua, enne kui keegi märkab.
+    ??? note "Tabel 1.7. Andmete jälgitavuse viis tunnust"
+        | Tunnus | Küsimus | Näide rikkest |
+        |---|---|---|
+        | värskus (freshness) | millal andmed viimati uuenesid? | öine laadimine jäi seisma, aruanne näitab eilseid numbreid |
+        | jaotus (distribution) | kas väärtused on lubatud vahemikus? | vanuse väljal on väärtus 250 |
+        | maht (volume) | kas tuli oodatud hulk ridu? | tavaliselt 10 000 tellimust päevas, täna 12 |
+        | skeem (schema) | kas andmete ülesehitus on sama? | allikas nimetas veeru ümber ja edasine töötlus katkes |
+        | päritolu (lineage) | kust andmed tulid ja mis teel muutus? | vigane väärtus tuli kolmanda süsteemi liidesest |
 
-??? note "Tabel 1.7. Andmete jälgitavuse viis tunnust"
-    | Tunnus | Küsimus | Näide rikkest |
-    |---|---|---|
-    | värskus (freshness) | millal andmed viimati uuenesid? | öine laadimine jäi seisma, aruanne näitab eilseid numbreid |
-    | jaotus (distribution) | kas väärtused on lubatud vahemikus? | vanuse väljal on väärtus 250 |
-    | maht (volume) | kas tuli oodatud hulk ridu? | tavaliselt 10 000 tellimust päevas, täna 12 |
-    | skeem (schema) | kas andmete ülesehitus on sama? | allikas nimetas veeru ümber ja edasine töötlus katkes |
-    | päritolu (lineage) | kust andmed tulid ja mis teel muutus? | vigane väärtus tuli kolmanda süsteemi liidesest |
+    Tööriistad on sarnased: andmetöötluse iga samm annab välja mõõdikud, need salvestatakse aegridadena ja alarm teatab, kui värskus, maht või jaotus läheb lubatud piiridest välja.
 
-Seda kursusel lähemalt ei käsitleta. Tööriistad on sarnased: andmetöötluse iga samm annab välja mõõdikud, need salvestatakse aegridadena ja alarm teatab, kui värskus, maht või jaotus läheb lubatud piiridest välja.
+    ??? question "Kontrolli ennast"
+        1. Töölaud näitab, et kõik serverid töötavad, aga aruandes on eilsed numbrid. Millist andmete jälgitavuse tunnust see rikub?
 
-??? question "Kontrolli ennast"
-    1. Töölaud näitab, et kõik serverid töötavad, aga aruandes on eilsed numbrid. Millist andmete jälgitavuse tunnust see rikub?
+        ??? success "Vastus"
+            Värskust. Andmed ei ole uuenenud, kuigi süsteem töötab.
 
-    ??? success "Vastus"
-        Värskust. Andmed ei ole uuenenud, kuigi süsteem töötab.
-
-## 5. Mida jälgida
+## 4. Mida jälgida
 
 Mõõdikuid on tuhandeid. Kaks levinud meetodit aitavad valida. Masina ressursside jaoks on Brendan Greggi [USE meetod](https://www.brendangregg.com/usemethod.html): iga ressursi kohta küsitakse kasutust (utilization), küllastust ehk ootejärjekorda (saturation) ja vigu (errors).
 
@@ -200,21 +199,21 @@ Mõõdikuid on tuhandeid. Kaks levinud meetodit aitavad valida. Masina ressurssi
     | Ressurss | Kasutus | Küllastus | Vead |
     |---|---|---|---|
     | protsessor | protsessori kasutus % | koormus `uptime` väljundis | |
-    | mälu | kasutatud mälu % | saaleala (swap) kasutus | protsessid, mille tuum mälu puudusel peatas |
+    | mälu | kasutatud mälu %, hõivatud saaleala (swap) | aktiivne saalimine: `vmstat 1` väljad `si` ja `so` | OOM-killeri lõpetatud protsessid |
     | ketas | kettaruumi kasutus %, sisend-väljundi aeg | sisend-väljundi järjekord | kettavead logis |
     | võrk | ribalaiuse kasutus | kadunud paketid | liidese vead |
 
 Teenuse jaoks on Google'i SRE raamatus [neli kuldset signaali](https://sre.google/sre-book/monitoring-distributed-systems/): vastuse aeg (latency), päringute hulk (traffic), vigade osakaal (errors) ja küllastus (saturation). Need näitavad, mida kasutaja kogeb. Täna jälgid USE meetodi järgi masinaid, teenuse signaalid tulevad K2-s ja K4-s.
 
 ??? question "Kontrolli ennast"
-    1. Mälu kasutus on 60%, aga saalealat kasutatakse palju. Kas see on kasutuse, küllastuse või vea näit USE meetodis?
+    1. `vmstat 1` näitab pikka aega suuri väärtusi väljadel `si` ja `so` ning rakendus on aeglane. Millist USE meetodi tunnust see näitab?
     2. Milline neljast kuldsest signaalist muutub esimesena, kui teenus hakkab kasutajale vigu andma?
 
     ??? success "Vastused"
-        1. Küllastus: mälu ei jätku ja osa tööd ootab ketta taga.
+        1. Mälu küllastust: andmeid liigutatakse pidevalt mälu ja saaleala vahel ning töö ootab ketta taga. Ainult hõivatud saaleala maht ei näita veel küllastust.
         2. Vigade osakaal (errors).
 
-## 6. Tööriistad: mis oli enne, mis on praegu, kuhu see läheb
+## 5. Tööriistad: mis oli enne, mis on praegu, kuhu see läheb
 
 <figure markdown="span">
   ![Ajajoon: 1999 Nagios kontrollib, kas teenus vastab; 2001 Zabbix agendi, andmebaasi ja graafikutega; 2008 Graphite aegread; 2010 Elasticsearch logid ühte kohta; 2012 Prometheus; 2014 Grafana; 2019 OpenTelemetry üks standard; praegu sama päringu mõõdik, logi ja jälg üksteise kõrval](../images/k01_ajalugu.svg)
@@ -288,7 +287,7 @@ Täna alustad mõõdikutest. Prometheus küsib mõõdikuid jälgitavatelt masina
 
 <figure markdown="span">
   ![Prometheuse server küsib target'itelt mõõdikuid, salvestab need aegridade andmebaasi ja vastab PromQL-i päringutele; andmeid kasutavad veebiliides, Grafana ja Alertmanager](../images/k01_ylesehitus.svg)
-  <figcaption>Joonis 1.4. Prometheuse ülesehitus: kogumine, aegridade andmebaas ja PromQL ([Prometheuse ülevaade](https://prometheus.io/docs/introduction/overview/)) (Talvik, 2026).</figcaption>
+  <figcaption>Joonis 1.4. Prometheuse ülesehitus: kogumine, aegridade andmebaas ja PromQL, Prometheuse ülevaate järgi (Talvik, 2026).</figcaption>
 </figure>
 
 ??? question "Kontrolli ennast"
@@ -301,7 +300,7 @@ Täna alustad mõõdikutest. Prometheus küsib mõõdikuid jälgitavatelt masina
         2. OpenTelemetry ei hoia ega näita andmeid, see on standard, millega rakendus andmed välja annab. Prometheus ja Jaeger hoiavad ja näitavad andmeid.
         3. Beszel'is pole päringukeelt, seal saab vaadata ainult ette tehtud graafikuid.
 
-## 7. Kes avab ühenduse
+## 6. Kes avab ühenduse
 
 Mõõdikute kogumisel on kaks küsimust: kes avab ühenduse ja milline komponent tagastab väärtused. Prometheuse puhul avab ühenduse Prometheus ja exporter tagastab korraga kõik oma mõõdikud. See on **pull-mudel**. Kui jälgitav masin saadab andmed ise keskserverisse, on see **push-mudel**: nii töötavad näiteks Zabbixi aktiivne agent, Telegraf ja OpenTelemetry, mida kasutad K4-s.
 
@@ -318,7 +317,7 @@ Pull-mudelis peab jälgitavas masinas olema port lahti ja server peab teadma kõ
     ??? success "Vastus"
         Ei saa, sest pull-mudelis avab ühenduse Prometheus. Sellises olukorras sobib push-mudel: masin saadab andmed ise väljapoole, mida tulemüür tavaliselt lubab.
 
-## 8. Exporter ja /metrics
+## 7. Exporter ja /metrics
 
 **Exporter** on programm, mis loeb mõõdikud ja avaldab need HTTP-aadressil `/metrics`. Masina näitude jaoks on [node_exporter](https://github.com/prometheus/node_exporter). See loeb Linuxi tuuma faile kaustades `/proc` ja `/sys`, kust samu numbreid loevad ka käsud `free`, `df` ja `top`.
 
@@ -351,7 +350,7 @@ Mõõdikutüüpe on kaks, mida täna kasutad ([Metric types](https://prometheus.
     ??? success "Vastus"
         Ei tõenda. Brauser ühendub klassiarvutist, Prometheus aga vm3 konteinerist. Teel võivad olla teised tulemüürireeglid ja `prometheus.yml`-is võib olla vale aadress või port. Kogumist tõendab Prometheuse **Targets**-leht ja päring, mis leiab aegrea.
 
-## 9. Target, scrape ja silt
+## 8. Target, scrape ja silt
 
 Prometheus loeb oma seadeid failist `prometheus.yml`. Seal on kirjas, keda küsida ja kui tihti. Näite aadressid asenda oma laborimasinate aadressidega:
 
@@ -385,7 +384,7 @@ Mõõdiku nimi koos siltide väärtustega määrab ühe **aegrea**. Kui masin av
     ??? success "Vastus"
         32: neli protsessorit korda kaheksa `mode` väärtust.
 
-## 10. Kuidas kogumist kontrollida
+## 9. Kuidas kogumist kontrollida
 
 Kui päring ei leia midagi, võib viga olla viies kohas. Kontrolli neid järjest, sest iga samm eeldab eelmist.
 
@@ -411,7 +410,7 @@ Kui päring ei leia midagi, võib viga olla viies kohas. Kontrolli neid järjest
     ??? success "Vastus"
         Võrk vm3 ja vm1 vahel töötab, sest vm1 vastas, aga keeldus ühendusest. Alusta sammust 1: kas `node_exporter` töötab vm1-s. Kui töötab, kontrolli sammu 2: kas port 9100 on tulemüüris lahti.
 
-## 11. PromQL kolme küsimuse kaudu
+## 10. PromQL kolme küsimuse kaudu
 
 Prometheuse päringukeel on [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/). Päringu kirjutad Prometheuse veebiliideses lehel **Query** või Grafana paneelis. Praktikumis koostad päringud kolmele küsimusele ja iga küsimus lisab päringukeelest ühe osa.
 
@@ -444,14 +443,19 @@ Sildifiltris saab kasutada nelja operaatorit ([Querying basics](https://promethe
     | `=~` | vastab regulaaravaldisele | `node_filesystem_avail_bytes{fstype=~"xfs\|ext4"}` |
     | `!~` | ei vasta regulaaravaldisele | `node_filesystem_avail_bytes{mountpoint!~"/run.*"}` |
 
-**Millises masinas on juurfailisüsteemis kõige vähem vaba ruumi?** Masinas on mitu failisüsteemi ja `node_filesystem_avail_bytes` annab rea igaühe kohta. Õige failisüsteemi valid sildiga `mountpoint="/"`. Vaba ruumi osakaal tuleb samamoodi nagu mälu puhul, jagades suurusega `node_filesystem_size_bytes`.
+**Millises masinas on juurfailisüsteemi vaba ruumi osakaal kõige väiksem?** Masinas on mitu failisüsteemi ja `node_filesystem_avail_bytes` annab rea igaühe kohta. Õige failisüsteemi valid sildiga `mountpoint="/"`. Vabu baite ei saa eri suurusega ketaste vahel võrrelda, seepärast jagatakse need failisüsteemi suurusega:
+
+```promql
+100 * node_filesystem_avail_bytes{mountpoint="/"}
+    / node_filesystem_size_bytes{mountpoint="/"}
+```
 
 <figure markdown="span">
   ![Vasakul instant vector: igast aegreast üks viimane väärtus; paremal range vector: viimase minuti väärtused, mis lähevad funktsiooni rate sisse](../images/k01_vektorid.svg)
   <figcaption>Joonis 1.12. Instant vector annab ühe väärtuse, range vector `[1m]` annab väärtused ajavahemikus (Talvik, 2026).</figcaption>
 </figure>
 
-**Kuidas muutub protsessori kasutus koormuskatse ajal?** `node_cpu_seconds_total` on counter. Counteri toorväärtus ütleb ainult, kui palju aega on kokku kulunud, kiiruse saamiseks loetakse kaks väärtust ja jagatakse vahe ajaga. Funktsioon `rate()` arvutab ajavahemiku `[1m]` väärtuste põhjal counteri keskmise kasvu sekundis ja arvestab ka counteri lähtestumist ([rate()](https://prometheus.io/docs/prometheus/latest/querying/functions/#rate)). Kasuta seda counterite, mitte gauge'ide jaoks. Jõudeoleku (`mode="idle"`) kasv on iga protsessori kohta 0 ja 1 vahel. `avg by (instance)` arvutab iga masina loogiliste protsessorite keskmise ja `100 * (1 - ...)` teeb sellest kasutuse protsendi.
+**Kuidas muutub protsessori kasutus koormuskatse ajal?** `node_cpu_seconds_total` on counter. Counteri toorväärtus ütleb ainult, kui palju aega on kokku kulunud, kiiruse saamiseks loetakse kaks väärtust ja jagatakse vahe ajaga. Funktsioon `rate()` arvutab ajavahemiku `[1m]` väärtuste põhjal counteri keskmise kasvu sekundis ja arvestab ka counteri lähtestumist ([rate()](https://prometheus.io/docs/prometheus/latest/querying/functions/#rate)). Kasuta seda counterite, mitte gauge'ide jaoks. Jõudeoleku (`mode="idle"`) kasv on iga protsessori kohta 0 ja 1 vahel. `avg by (instance)` arvutab iga masina loogiliste protsessorite keskmise ja `100 * (1 - ...)` näitab, mitu protsenti ajast protsessor ei olnud jõudeolekus. Sinna kuulub ka sisend-väljundi ootamine (`iowait`) ja virtuaalmasinast äravõetud aeg (`steal`), nii et suure väärtuse põhjuse leidmiseks vaata ka eri olekuid päringuga `avg by (mode) (rate(node_cpu_seconds_total[1m]))`.
 
 <figure markdown="span">
   ![Ülal counteri toorväärtus, mis koormuse ajal peaaegu ei kasva; all rate, mis koormuse ajal langeb nulli lähedale](../images/k01_counter_rate.svg)
@@ -485,11 +489,11 @@ Võrdlus, näiteks `< 20`, jätab alles ainult read, mille kohta tingimus kehtib
     3. Mis on päringu `node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100` tulemuse ühik ja ulatus?
 
     ??? success "Vastused"
-        1. Pidevalt kasvavat jõudeaja summat sekundites. Sellest ei näe, kui koormatud masin praegu on, vaja on kasvu kiirust (`rate()`).
+        1. Iga loogilise protsessori igas olekus (`idle`, `user`, `system`, `iowait` ja teised) kokku veedetud aega sekundites, iga olek eraldi joonena. Ainult jõudeaega näitab `node_cpu_seconds_total{mode="idle"}`. Praeguse koormuse jaoks on vaja kasvu kiirust (`rate()`), mitte koguväärtust.
         2. Ei. Uus mõõtmine mõjutab tulemust kohe, aga täielikult jõuab muutus tulemusse alles umbes minuti jooksul.
         3. Protsent, iga masina kohta arv 0 ja 100 vahel.
 
-## 12. Grafana: andmeallikas, paneel ja töölaud
+## 11. Grafana: andmeallikas, paneel ja töölaud
 
 Prometheuse veebiliides sobib päringu koostamiseks ja kontrollimiseks. Igapäevaseks vaatamiseks kasutatakse [Grafanat](https://grafana.com/docs/grafana/latest/): see küsib andmed Prometheusest ja näitab neid töölaual. Grafana ise mõõdikuid ei kogu ega salvesta.
 

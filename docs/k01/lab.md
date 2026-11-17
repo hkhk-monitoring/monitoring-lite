@@ -614,7 +614,7 @@ date +%T; ssh vm2 'stress-ng --cpu $(nproc) --timeout 60s'; date +%T
 Kirjuta päring, mis tagastab ainult masinad, kus juurfailisüsteemis on vaba ruumi alla 99%. Seejärel muuda piiri nii, et tulemusse jääb ainult üks masin. K2-s saab sellisest päringust alarmireegel.
 
 ??? tip "Vihje"
-    Võta oma 6.2 päring ja lisa selle lõppu võrdlus nagu loengu joonisel 1.15. Tühi tulemus tähendab, et tingimus ei kehti ühegi masina kohta.
+    Võta oma 6.2 päring ja lisa selle lõppu võrdlus nagu loengu joonisel 1.15. Kui kõigi masinate mõõdikud on olemas, tähendab tühi tulemus, et tingimus ei kehti ühegi masina kohta. Kas andmed on olemas, näitab päring `up`.
 
 ## Osa 7 · Grafana
 

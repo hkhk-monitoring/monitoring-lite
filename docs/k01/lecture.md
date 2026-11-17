@@ -13,16 +13,19 @@ DevOps Lite'is paigaldasid Ansible'i ja Compose'iga teenused kolme masinasse. Ku
 ??? abstract "Õpiväljundid"
     Pärast loengut ja praktikumi oskad:
 
-    - leida Linuxi masinast logikirjed ja ressursside hetkenäidud ning selgitada, miks sellest ei piisa;
-    - eristada mõõdikut, logi ja jälge ning selgitada, millist küsimust igaüks aitab vastata;
-    - selgitada seire ja jälgitavuse erinevust ning nimetada, mida jälgida masina ja teenuse puhul;
-    - selgitada, kes avab ühenduse ja milline komponent tagastab väärtused Prometheuse puhul;
+    - leida Linuxi masinast logikirjed ja ressursside hetkenäidud ning selgitada, miks neist ei piisa;
+    - eristada mõõdikut, sündmust, logi ja jälge ning selgitada, millisele küsimusele igaüks vastab;
+    - selgitada seire ja jälgitavuse erinevust;
+    - kasutada USE meetodit masina ressursside jälgimiseks ja nimetada teenuse neli kuldset signaali;
+    - selgitada pull- ja push-mudeli erinevust ning seda, kes Prometheuse puhul avab ühenduse ja kes tagastab väärtused;
     - lugeda exporter'i väljundist mõõdiku nime, silte, väärtust, tüüpi ja ühikut;
-    - kontrollida kogumist sammhaaval: exporter, `/metrics`, Targets-leht, päring;
+    - kontrollida Prometheuse kogumist sammhaaval: exporter, `/metrics`, Targets-leht, päring;
     - koostada PromQL-i päringuid saadaval oleva mälu, failisüsteemi vaba ruumi ja protsessori kasutuse uurimiseks;
-    - lisada Grafanasse andmeallika ja paneeli oma päringuga.
+    - luua Grafanasse Prometheuse andmeallika ja lisada paneeli oma PromQL-i päringuga.
 
 ## 1. Üks masin: mida Linux ise näitab
+
+Ketas täitub öösel ja teenus lakkab töötamast. Kuidas oleksid seda enne märganud ja kust näeksid hommikul, mis juhtus? Vastus algab sellest, mida masin ise näitab.
 
 Iga Linuxi masin kirjutab sündmused logisse ja näitab käskudega, kui palju ressursse on kasutusel. AlmaLinuxis kogub logid teenus **journald** ja neid loeb käsk `journalctl`. Logikirjel on aeg, masin, programm ja tekst.
 
@@ -56,7 +59,7 @@ uptime        # koormus viimase 1, 5 ja 15 minuti keskmisena
 
 ## 2. Andmed: mida süsteem endast annab
 
-Monitooring ja jälgitavus põhinevad samadel andmetel. Andmeid, mida süsteem enda kohta välja annab, nimetatakse **telemeetriaks** (telemetry). Telemeetriat tekitavad operatsioonisüsteem, teenused nagu nginx ja andmebaas, rakenduse kood, võrguseadmed ja kasutaja brauser. Hajusas süsteemis on selliseid allikaid kümneid kuni tuhandeid.
+Monitooring ja jälgitavus põhinevad samadel andmetel. Andmed, mida süsteem enda kohta välja annab, on **telemeetria** (telemetry). Telemeetriat tekitavad operatsioonisüsteem, teenused nagu nginx ja andmebaas, rakenduse kood, võrguseadmed ja kasutaja brauser. Hajusas süsteemis on selliseid allikaid kümneid kuni tuhandeid.
 
 Telemeetriat on nelja liiki ja nende ingliskeelsete nimede algustähtedest tuleb lühend **MELT**: metrics, events, logs, traces.
 
@@ -76,7 +79,7 @@ Telemeetriat on nelja liiki ja nende ingliskeelsete nimede algustähtedest tuleb
     | mõõdik | odav hoida ja töödelda, sobib aegridadeks ja üldpildiks | mida ette ei mõõdetud, seda hiljem ei näe |
     | sündmus | näitab täpselt, mis toiming juhtus, sobib ootamatuteks päringuteks | vajab rohkem salvestusruumi ja võrku kui mõõdik |
     | logi | kõige detailsem, parim konkreetse vea otsimiseks | suurt hulka on raske hoida ja läbi otsida, vaba tekst on raske kokku võtta |
-    | jälg | näitab tegevust otsast lõpuni üle mitme teenuse | rakendus peab jälje tunnuse edasi andma, vajab instrumenteerimist |
+    | jälg | näitab tegevust otsast lõpuni üle mitme teenuse | rakenduse koodi tuleb lisada telemeetria väljaandmine ehk **instrumenteerimine**, et jälje tunnus liiguks teenuselt teenusele |
 
 Mõõdik on sama arv ikka ja jälle mõõdetuna. Osa 1 käsk `free` annab ühe punkti, monitooring kogub neid iga 15 sekundi järel ja tekib **aegrida**:
 
@@ -104,9 +107,9 @@ Rikke juures loetakse kahte aega. **Avastamise aeg** on rikke algusest selle mä
 
 ## 3. Seire ja jälgitavus
 
-**Seire** (monitoring) on andmete kogumine ja nende põhjal aruande tegemine mõõdikute kohta, mis näitavad süsteemi tervist. Töölaual on protsessori kasutus, sest seda tahetakse näha, ja alarm teatab, kui ketas on 90% täis. Seire eeldab, et võimalikud rikked on ette teada.
+Eesti keeles kasutatakse sama asja kohta kahte sõna, seire ja monitooring, need tähendavad sama. **Seire** (monitoring) on andmete kogumine ja nende põhjal aruande tegemine mõõdikute kohta, mis näitavad süsteemi tervist. Töölaual on protsessori kasutus, sest seda tahetakse näha, ja alarm teatab, kui ketas on 90% täis. Seire eeldab, et võimalikud rikked on ette teada.
 
-**Jälgitavus** (observability) on võime öelda süsteemi tegelik olek nende andmete põhjal, mida süsteem ise tekitab. Selleks kogutakse keskkonnast nii palju telemeetriat, et saaks uurida ka riket, mida keegi ei oodanud. Selliseid rikkeid nimetatakse inglise keeles *unknown unknowns*. AWS-i võrdlus [Monitoring vs observability](https://aws.amazon.com/compare/the-difference-between-monitoring-and-observability/) ütleb vahe lühidalt: seire vastab küsimustele millal ja mis läks valesti, jälgitavus küsimustele miks ja kuidas.
+**Jälgitavus** (observability) on võime öelda süsteemi tegelik olek nende andmete põhjal, mida süsteem ise tekitab. Selleks kogutakse keskkonnast nii palju telemeetriat, et saaks uurida ka riket, mida keegi ei oodanud. Inglise keeles on nende nimi *unknown unknowns*. AWS-i võrdlus [Monitoring vs observability](https://aws.amazon.com/compare/the-difference-between-monitoring-and-observability/) ütleb vahe lühidalt: seire vastab küsimustele millal ja mis läks valesti, jälgitavus küsimustele miks ja kuidas.
 
 ??? note "Tabel 1.4. Seire ja jälgitavus"
     | | Seire | Jälgitavus |
@@ -133,7 +136,7 @@ Jälgitavus on muutunud tähtsaks, sest süsteemid on hajusad. Üks rakendus koo
     |---|---|
     | andmed on eraldi tööriistades | mõõdikud ühes, logid teises, jäljed kolmandas süsteemis ja neid ei saa omavahel siduda |
     | andmeid on liiga palju | kõike kogudes kasvab maht ja hind, olulist on raske leida |
-    | rakendus ei anna andmeid välja | koodi tuleb lisada mõõdikud ja jäljed, seda nimetatakse instrumenteerimiseks |
+    | rakendus ei anna andmeid välja | rakendus tuleb instrumenteerida: koodi lisatakse mõõdikute ja jälgede väljaandmine |
     | eri teenustel eri vormingud | sama asja nimetatakse eri teenustes eri nimega |
 
 **Kuidas jälgitavus teoks tehakse.** Jälgitavus tekib hästi tehtud seirest: telemeetria kogutakse kokku, näidatakse arusaadavalt ja andmeid tõlgendatakse koos. Ainult küsitlemisest ja lävenditest ei piisa. Eraldi mõõdikud, sündmused, logid ja jäljed tuleb omavahel siduda, näiteks aja, masina või päringu tunnuse järgi, et leida rikke põhjus.

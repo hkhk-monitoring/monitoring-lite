@@ -544,7 +544,7 @@ avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))
 Võrdlus, näiteks `< 20`, jätab alles ainult read, mille kohta tingimus kehtib. Sellest tuleb K2-s alarmireegel.
 
 ??? info "K2: alarm jõuab Discordi"
-    Alarmireegel on päring koos tingimusega, mis kehtib teatud aja, näiteks „vm2 protsessor on üle 80% kauem kui 2 minutit“. Kui reegel käivitub, saadetakse teavitus kanalisse, kus inimesed seda näevad. K2-s saadad teavitused kursuse Discordi serverisse **TechTribe**: Grafana alarmid ja Zabbixi triggerid saadavad sinna teate, kui probleem tekib, ja teise teate, kui see laheneb.
+    Alarmireegel on päring koos tingimusega, mis kehtib teatud aja, näiteks „vm2 protsessor on üle 80% kauem kui 2 minutit“. Kui reegel käivitub, saadetakse teavitus kanalisse, kus inimesed seda näevad. K2-s saadad teavitused kursuse Discordi serverisse **TechTribe**, ITS-25 kanalisse `#it-25`: Grafana alarmid ja Zabbixi triggerid saadavad sinna teate, kui probleem tekib, ja teise teate, kui see laheneb.
 
     Grafanas on Discord valmis teavituskanal. Prometheuse oma teavitustööriist Alertmanager oskab Discordi saata alates versioonist 0.25.0. Enne seda oli vaja eraldi vahendusprogrammi, mis Alertmanageri teate Discordi kujule teisendas. Seadistuse näide on PromLabsi artiklis [Sending Prometheus alerts to Discord with Alertmanager v0.25.0](https://promlabs.com/blog/2022/12/23/sending-prometheus-alerts-to-discord-with-alertmanager-v0-25-0/).
 

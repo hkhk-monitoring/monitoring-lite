@@ -169,7 +169,7 @@ node_exporter --version
 
 systemd käivitab programmi teenusena, kui sellel on **unit-fail**. Sektsioon `[Unit]` kirjeldab teenust ja käivitusjärjekorda, `[Service]` ütleb, millise kasutajana ja millise käsuga programm käivitub, ning `[Install]` ütleb, millise süsteemi oleku osana teenus koos masinaga käivitub. Ametlik näidis on kaustas [examples/systemd](https://github.com/prometheus/node_exporter/tree/master/examples/systemd), see on tehtud teistsuguse paigalduse jaoks (socket-fail ja keskkonnafail), sinu fail on lihtsam.
 
-Loo vm2-s fail `/etc/systemd/system/node_exporter.service` (`sudo nano`). Esimene sektsioon on antud.
+Loo vm2-s fail `/etc/systemd/system/node_exporter.service` käsuga `sudo vi`. Kui eelistad redaktorit nano, paigalda see enne käsuga `sudo dnf install -y nano`, sest AlmaLinuxi minimaalses paigalduses seda ei ole. Esimene sektsioon on antud.
 
 ???+ example "Failiosa: [Unit]"
     ```ini
@@ -529,7 +529,7 @@ Oota vähemalt 15 sekundit, värskenda Targets-lehte ja salvesta tõend, kui vm1
 
 ```bash
 ssh vm3 "curl -fsS localhost:9090/api/v1/targets" > logid/k1-viga.json
-grep -o '"lastError":"[^"]*"' logid/k1-viga.json
+grep -o '"lastError":"[^,]*' logid/k1-viga.json
 ```
 
 Taasta soovitud olek playbook'iga. Playbook nõuab, et teenus on olekus `started`, seega käivitab see node_exporteri uuesti:
@@ -597,10 +597,10 @@ Kolmanda ja neljanda osa koostad ise: esmalt protsessorite keskmine, üks rida m
     100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[1m])))
     ```
 
-Pane neljas päring vahekaardile **Graph** ja tekita vm2-s 60 sekundiks koormus. `$(nproc)` on masina loogiliste protsessorite arv, igaühele tuleb üks koormav protsess:
+Pane neljas päring vahekaardile **Graph** ja tekita vm2-s 60 sekundiks koormus. `$(nproc)` on masina loogiliste protsessorite arv, igaühele tuleb üks koormav protsess. Prometheuse graafiku ajatelg on UTC ajas, seepärast näitab `date -u` algus- ja lõpuaega samuti UTC-s:
 
 ```bash
-date +%T; ssh vm2 'stress-ng --cpu $(nproc) --timeout 60s'; date +%T
+date -u +%T; ssh vm2 'stress-ng --cpu $(nproc) --timeout 60s'; date -u +%T
 ```
 
 ??? question "Kas graafiku muutus algas ja lõppes täpselt samal hetkel kui katse?"
@@ -665,19 +665,19 @@ ssh vm3 "cd ~/monitooring && docker compose up -d && docker compose ps"
     ??? success "Vastus"
         Ei. Compose loob uue konteineri ainult teenusele, mille kirjeldus muutus. Prometheuse kirjeldus jäi samaks ja konteiner töötab edasi, väljundis on `Running`.
 
-Ava `http://<vm3-IP>:3000`. Esimene sisselogimine on `admin` ja `admin`, Grafana palub kohe uue parooli. Kontrolli **Connections → Data sources → Prometheus** lehe allosas nupuga **Save & test**, et Grafana jõuab Prometheuseni.
+Ava `http://<vm3-IP>:3000`. Esimene sisselogimine on `admin` ja `admin`, Grafana palub kohe uue parooli. Kontrolli **Connections → Data sources → Prometheus** lehe allosas nupuga **Test**, et Grafana jõuab Prometheuseni. Failiga lisatud andmeallikat veebiliideses muuta ei saa, seepärast on seal nupu **Save & test** asemel ainult **Test**.
 
 ??? warning "Kui andmeallikat pole või test annab vea"
     Vaata logi: `ssh vm3 "cd ~/monitooring && docker compose logs grafana | grep -i provisioning"`. Kontrolli, et fail on vm3-s kaustas `~/monitooring/grafana/` ja et `url` on `http://prometheus:9090`, mitte `localhost`: konteineris tähendab `localhost` Grafana konteinerit ennast.
 
-**Oma paneel.** Tee uus töölaud: **Dashboards → New → New dashboard → Add visualization**, vali andmeallikas **Prometheus**. Lülita päringuväli režiimi **Code** ja kirjuta osa 6.1 päring, mis näitab saadaval mälu baitides masinate kaupa. Paneeli seadetes paremal pane **Standard options → Unit** väärtuseks **bytes(IEC)** ja päringu all **Options → Legend** väärtuseks **Custom** `{{instance}}`. Anna paneelile pealkiri, salvesta töölaud nimega `K1`.
+**Oma paneel.** Tee uus töölaud: **Dashboards → New → New dashboard**. Paremal paneelis **Add** vajuta **Panel** ja seejärel paneelil **Configure visualization**. Andmeallikas on **Prometheus**, sest see on failis märgitud vaikimisi andmeallikaks. Lülita päringuväli režiimi **Code** ja kirjuta osa 6.1 päring, mis näitab saadaval mälu baitides masinate kaupa. Paneeli seadetes paremal pane **Standard options → Unit** väärtuseks **bytes(IEC)** ja päringu all **Options → Legend** väärtuseks **Custom** `{{instance}}`. Anna paneelile pealkiri, salvesta töölaud nimega `K1`.
 
 ??? success "Oodatav tulemus"
     Graafikul on kaks joont, kumbki ühe masina saadaval mälu, teljel ühikud MiB või GiB, legendis masinate aadressid.
 
 Lisa samale töölauale teine paneel oma 6.3 protsessori kasutuse päringuga (**Unit**: **Percent (0-100)**). Käivita koormuskatse uuesti ja vaata, kas Grafanas on sama kuju mis Prometheuse graafikul.
 
-Salvesta töölaud repositooriumisse. Töölaua menüüs **Export → Export as JSON** vali **Copy to clipboard**, loo vm1 repositooriumis fail `konf/toolaud.json` ja kleebi sisu sinna.
+Salvesta töölaud repositooriumisse. Vali töölaua ülaribal **Export → Export as code**, ava **Advanced options** ja pane **Model** väärtuseks **Classic**. Vaikimisi kuju **V2 Resource** on Grafana uue API kuju, automaatkontroll ja teised Grafana versioonid ootavad klassikalist töölaua JSON-i. Seejärel vali **Copy to clipboard**, loo vm1 repositooriumis fail `konf/toolaud.json` ja kleebi sisu sinna.
 
 **Valmis töölaud.** Impordi kogukonna töölaud Node Exporter Full: **Dashboards → New → Import**, ID `1860`, **Load**, andmeallikaks **Prometheus**, **Import**. Leia sealt oma masinate mälu ja ketta näit ning ava ühe paneeli **Edit**, et näha selle PromQL-i päringut ([Import dashboards](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/import-dashboards/)).
 

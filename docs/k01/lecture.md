@@ -347,6 +347,11 @@ Mõõdikute kogumisel on kaks küsimust: kes avab ühenduse ja milline komponent
 
 Pull-mudelis peab jälgitavas masinas olema port lahti ja server peab teadma kõiki aadresse. Push-mudelis peab lahti olema serveri port ja jälgitav masin peab teadma serveri aadressi. Pull-mudeli eelis on see, et Prometheus märkab kohe, kui target ei vasta.
 
+Pull-mudeli teine eelis on see, et kõik seaded on ühes kohas. Prometheus otsustab ise, keda ja kui tihti küsida, ning ükski jälgitav masin ei saa serverit andmetega üle koormata. Kaks erijuhtu lahendatakse lisavahenditega:
+
+- **Lühiajalised tööd**, näiteks öine varundusskript, lõpetavad töö enne, kui Prometheus jõuab neilt küsida. Sellised tööd saadavad oma tulemuse vahelattu, mille nimi on [Pushgateway](https://github.com/prometheus/pushgateway), ja Prometheus küsib andmed sealt.
+- **Muutuvad aadressid.** Konteinereid luuakse ja kustutatakse pidevalt ning nende aadressid muutuvad. Selleks oskab Prometheus target'id ise leida, näiteks Kubernetesest, Dockerist või failist, mida mõni skript uuendab. Seda nimetatakse teenuste automaatseks avastamiseks ehk *service discovery*. Täna on target'id `prometheus.yml`-is käsitsi kirjas, sest masinaid on kolm ja nende aadressid ei muutu.
+
 <figure markdown="span">
   ![Prometheus vm3-s saadab vm2 ja vm1 node_exporterile päringu GET /metrics ja saab vastuseks mõõteväärtused](../images/k01_kes_kusib.svg)
   <figcaption>Joonis 1.8. Prometheus küsib jälgitavate masinate node_exporteritelt mõõdikuid. Ühenduse avab Prometheus, exporter ainult vastab (Talvik, 2026).</figcaption>
@@ -384,6 +389,25 @@ node_cpu_seconds_total{cpu="0",mode="idle"} 81432.17
 Mõõteväärtuse real on mõõdiku **nimi** (`node_filesystem_avail_bytes`) ja **väärtus** (`1.2034e+10`). Kui mõõdikul on **sildid** ehk label'id, on need nime järel loogelistes sulgudes (`mountpoint="/"`), mälumõõdikul neid pole. `e+10` tähendab korrutamist arvuga 10¹⁰. Read `# TYPE` ja `# HELP` kirjeldavad mõõdiku tüüpi ja tähendust. Ühik on nime lõpus: `_bytes` tähendab baite ja `_seconds_total` sekundeid kokku.
 
 Mõõdikutüüpe on kaks, mida täna kasutad ([Metric types](https://prometheus.io/docs/concepts/metric_types/)). **Gauge** on hetkeväärtus, mis võib tõusta ja langeda, näiteks vaba mälu. **Counter** ainult kasvab ja lähtestub nulli alles masina taaskäivitusel, näiteks protsessori jõudeaeg sekundites alates käivitusest. Prometheuse tavade järgi lõpeb counteri nimi järelliitega `_total`.
+
+Kaks keerulisemat tüüpi on **histogramm** ja **summary**. Need ei salvesta ühte arvu, vaid jaotuse. Histogramm loeb, mitu mõõtmist jäi igasse vahemikku, näiteks mitu päringut vastas alla 100 ms, alla 300 ms ja alla 1 s. Sellest saab küsida, kui suur osa päringutest oli aeglasem kui 300 ms. Summary arvutab sarnase vastuse juba rakenduses, näiteks aja, millest 95% päringutest kiiremad olid. Neid tüüpe kasutavad rakenduste mõõdikud, node_exporteri mõõdikud on peamiselt gauge'id ja counter'id.
+
+### Sildid on metaandmed
+
+Mõõdiku nimi ütleb, mida mõõdeti, väärtus ütleb arvu. **Sildid** ütlevad, kust see arv tuli: millises masinas, millises protsessori tuumas või millisel failisüsteemil. Sellist lisateavet nimetatakse **metaandmeteks**. Prometheus lisab igale mõõdikule kogumisel kaks silti ise: `job` on target'ite rühm failist `prometheus.yml` ja `instance` on ühe target'i aadress koos pordiga.
+
+```text
+node_memory_MemAvailable_bytes{job="node", instance="vm1:9100"}  1.47e+09
+node_memory_MemAvailable_bytes{job="node", instance="vm2:9100"}  6.10e+08
+```
+
+Sama nimi eri siltidega on eri aegread. Päringus valib silt õige aegrea: `node_memory_MemAvailable_bytes{instance="vm2:9100"}` annab ainult vm2 vaba mälu. Konteinerite ja Kubernetese puhul lisatakse silte veel, näiteks nimeruum ja teenuse nimi, et sama mõõdikut saaks vaadata teenuste kaupa.
+
+### Prometheus ei salvesta sündmusi
+
+Prometheus hoiab ainult arvulisi aegridu. Üksikut sündmust koos tekstiga, näiteks veateadet „404 Not Found: /pilt.png“, ta ei salvesta. Rakendus annab Prometheusele hoopis counter'i, mitu 404-viga on kokku olnud, ja päring arvutab sellest, mitu viga tuli viimase viie minuti jooksul. Mõõdik ütleb, et vigu on palju. Miks need tekkisid, näitavad logid.
+
+Sündmused, nagu uue versiooni paigaldus või teenuse taaskäivitus, hoitakse seetõttu mujal: logisüsteemis, mida kasutad K3-s, või Grafana **annotatsioonina**, mis märgib sündmuse hetke graafikule. Siis on graafikul näha, et mälukasutus hakkas kasvama kohe pärast paigaldust. Seda vahet kirjeldavad ka artiklid [Prometheus Monitoring: The Definitive Guide](https://devconnected.com/the-definitive-guide-to-prometheus-in-2019/) ja Sysdigi [võrdlus](https://www.sysdig.com/blog/prometheus-monitoring-and-sysdig-monitor-a-technical-comparison). Mõlemad on kirjutatud aastatel 2018–2019, nii et tööriistade loetelu on neis vanem kui praegu.
 
 ??? question "Kontrolli ennast"
     `/metrics` avaneb sinu brauseris aadressil `http://<vm2-IP>:9100/metrics`. Kas see tõendab, et Prometheus saab samast aadressist koguda?

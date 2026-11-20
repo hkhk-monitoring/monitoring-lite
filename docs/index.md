@@ -33,9 +33,9 @@ tags:
 |---|---|---|
 | **[K1](k01/lecture.md)** | Mõõdikud: server küsib, exporter vastab, töölaud | node_exporter Ansible'iga, Prometheus ja Grafana Docker Compose'iga, PromQL |
 | **K2** | Zabbix ja alarmid: agent, server, triggerid ning sama alarm Grafanas Prometheuse andmetest | Zabbix 7 LTS, Zabbix agent 2, Grafana alarmid |
-| **K3** | Logid ühte kohta ja otsing | Elastic Stack: Elasticsearch, Kibana, Elastic Agent |
-| **K4** | Päringu teekond | OpenTelemetry, Jaeger, näidisrakendus |
-| **K5** | Lõpp: rike, avastamine, põhjus ja taastumise kontroll | kõik koos |
+| **K3** | Logid: kõigepealt Linuxi vahenditega keskserverisse, siis samad logid otsingusse | journald, rsyslog, auditd, logrotate; Elastic Stack: Elasticsearch, Kibana, Elastic Agent |
+| **K4** | Päringu teekond: mõõdikud, logid ja jäljed ühe päringu kaupa | OpenTelemetry ja Collector, Jaeger, näidisrakendus |
+| **K5** | Valvevahetus: rikked tulevad, sina leiad põhjuse. Aruanne kolme kuu andmetest | kõik koos; lisaülesandena Grafana Cloud ja Wazuh |
 
 Iga kohtumine jätkab eelmise tulemust: K1-s paigaldatud Prometheus ja Grafana jäävad vm3-s tööle ja K2 lisab Zabbixi ning alarmid.
 

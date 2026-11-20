@@ -120,7 +120,7 @@ ssh -t vm2 "sudo dnf install -y epel-release && sudo dnf install -y stress-ng &&
 Enne kui monitooring andmeid kogub, vaata, mida vm2 ise näitab. Samad arvud kogub node_exporter hiljem iga 15 sekundi järel.
 
 ```bash
-ssh vm2 "journalctl -p err -b --no-pager | tail -5"
+ssh vm2 "sudo journalctl -p err -b --no-pager | tail -5"
 ssh vm2 "free -h; df -h /; uptime"
 ```
 
@@ -164,6 +164,8 @@ sudo install -m 0755 "node_exporter-${V}.linux-amd64/node_exporter" /usr/local/b
 sudo useradd --system --no-create-home --shell /sbin/nologin node_exporter
 node_exporter --version
 ```
+
+Kui node_exporter on masinas juba olemas, annab `useradd` teate `user 'node_exporter' already exists`. See on ohutu: kasutaja on olemas ja `install` kirjutab programmi üle.
 
 `install` loob uue faili, seega saab see kausta `/usr/local/bin` SELinuxi sildi. Kui teisaldad faili käsuga `mv`, jääb alles kausta `/tmp` silt ja systemd ei saa programmi käivitada.
 
@@ -668,7 +670,7 @@ ssh vm3 "cd ~/monitooring && docker compose up -d && docker compose ps"
 Ava `http://<vm3-IP>:3000`. Esimene sisselogimine on `admin` ja `admin`, Grafana palub kohe uue parooli. Kontrolli **Connections → Data sources → Prometheus** lehe allosas nupuga **Test**, et Grafana jõuab Prometheuseni. Failiga lisatud andmeallikat veebiliideses muuta ei saa, seepärast on seal nupu **Save & test** asemel ainult **Test**.
 
 ??? warning "Kui andmeallikat pole või test annab vea"
-    Vaata logi: `ssh vm3 "cd ~/monitooring && docker compose logs grafana | grep -i provisioning"`. Kontrolli, et fail on vm3-s kaustas `~/monitooring/grafana/` ja et `url` on `http://prometheus:9090`, mitte `localhost`: konteineris tähendab `localhost` Grafana konteinerit ennast.
+    Vaata logi: `ssh vm3 "cd ~/monitooring && docker compose logs grafana | grep provisioning.datasources"`. Kontrolli, et fail on vm3-s kaustas `~/monitooring/grafana/` ja et `url` on `http://prometheus:9090`, mitte `localhost`: konteineris tähendab `localhost` Grafana konteinerit ennast.
 
 **Oma paneel.** Tee uus töölaud: **Dashboards → New → New dashboard**. Paremal paneelis **Add** vajuta **Panel** ja seejärel paneelil **Configure visualization**. Andmeallikas on **Prometheus**, sest see on failis märgitud vaikimisi andmeallikaks. Lülita päringuväli režiimi **Code** ja kirjuta osa 6.1 päring, mis näitab saadaval mälu baitides masinate kaupa. Paneeli seadetes paremal pane **Standard options → Unit** väärtuseks **bytes(IEC)** ja päringu all **Options → Legend** väärtuseks **Custom** `{{instance}}`. Anna paneelile pealkiri, salvesta töölaud nimega `K1`.
 
